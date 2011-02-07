@@ -81,7 +81,7 @@ sub sameWork {
 
     my $debug = 0;
 
- 	my ($e, $c, $tresh,$loose,$nolinks) = @_;
+ 	my ($e, $c, $threshold,$loose,$nolinks) = @_;
 
     if ($debug) {
         warn "sameEntry 1: " . toString($e);
@@ -93,7 +93,7 @@ sub sameWork {
     }
 
 	return 0 if (!$c);
-    $tresh = 0.15 unless $tresh;
+    $threshold = 0.15 unless $threshold;
 
     # normalize encoding of relevant fields
     local $e->{title} = decodeHTMLEntities($e->{title});
@@ -118,7 +118,7 @@ sub sameWork {
 	my ($fname2,$lname2) = parseName(firstAuthor($c));
 
 	# if authors quite different, not same
-    if (!$asame and my_dist_text($lname1,$lname2) / (length($lname1) + 1) > $tresh) {
+    if (!$asame and my_dist_text($lname1,$lname2) / (length($lname1) + 1) > $threshold) {
         #print "$lname1, $lname2<br>";
         #print my_dist_text($lname1,$lname2); 
      	return 0;
@@ -158,9 +158,9 @@ sub sameWork {
                         ($e->{volume} and $e->{volume} ne $c->{volume});
         }
         if ($loose) {
-            $tresh /= 2;
+            $threshold /= 2;
         } else {
-            $tresh /= 3;
+            $threshold /= 3;
         }
     } 
     
@@ -171,7 +171,7 @@ sub sameWork {
 
     warn "pre loose mode: loose = $loose" if $debug;
 
-    #print "threshold $lname1,$lname2: $tresh\n";
+    #print "threshold $lname1,$lname2: $threshold\n";
 	# ok if distance short enough without doing anything
 	#print "distance: " . distance(lc $e->{title},lc $c->{title}) / (length($e->{title}) +1) . "\n";
 
@@ -191,13 +191,13 @@ sub sameWork {
     my $score = (my_dist_text($str1,$str2) / (length($str1) +1));
     
     #print $score . "<br>\n";
- 	return 1 if ( $score < $tresh);
+ 	return 1 if ( $score < $threshold);
 
 	# now if loose mode and only one of the titles has a ":", compare the part before ":" with the other title instead
     if ($loose) {
 
         warn "loose: $str1 -- $str2" if $debug;
-        return 1 if (my_dist_text($str1,$str2) / (length($str1) +1) < $tresh);
+        return 1 if (my_dist_text($str1,$str2) / (length($str1) +1) < $threshold);
 
         if ($e->{title} =~ /(.+):(.+)/) {
 
@@ -205,7 +205,7 @@ sub sameWork {
             if ($c->{title} =~ /(.+):(.+)/) {
                 return 0;
             } else {
-                if (my_dist_text($str1,$str2) / (length($str1) +1)< $tresh) {
+                if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
                     return 1;
                 }
             }
@@ -213,7 +213,7 @@ sub sameWork {
         } elsif ($c->{title} =~ /(.+):(.+)/) {
 
             my $str2 = _strip_non_word($1);
-            if (my_dist_text($str1,$str2) / (length($str1) +1)< $tresh) {
+            if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
                 return 1;
             }
 
@@ -328,6 +328,12 @@ This module exports two subroutines which perform fuzzy comparisons between cita
 =head2 sameWork(hashref citation1, hashref citation2): boolean
 
 Takes as input two citations in a simple format illustrated in the synopsis. Returns true iff the two citations plausibly refer to the same work. A number of factors are taken into account to make the evaluation resistant to random variations. Among them: names are normalized and compared fuzzily using L<Text::Names>, allowance is made for random typos, allowances are made for short and long versions of titles (esp with titles containing a colon), small but important variations as in "Paper title part 1" and "Paper title part 2" are taken into account. The algorithm has been use to merge multiple data sources on PhilPapers.org. 
+
+Some advanced additional parameters are not explained here; they can only be explained by pointing to the source code. There use should not normally be necessary.
+
+=head2 sameAuthors(arrayref list1, arrayref list2): boolean
+
+Returns true if the two list are plausibly lists of the same authors. This is merely a convenient wrapper over L<Text::Names>::samePerson.
 
 =head2 EXPORT
 
