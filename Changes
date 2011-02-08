@@ -3,4 +3,6 @@ Revision history for Perl extension Biblio::Citation::Compare.
 0.01  Mon Feb  7 20:12:19 2011
 	- original version; created by h2xs 1.23 with options
 		-AX Biblio::Citation::Compare
+0.02  Feb 8
+    - Fixed dependency issues
 
