@@ -166,6 +166,24 @@ check(
 );
 
 
+ok(
+  sameWork(
+    # first item
+    {
+        authors => ['Bourget, D','Lukasiak, Zbigniew'],
+        title => "A paper with such and such a title",
+        date => 2010
+    },
+    # second item
+    {
+        authors => ['Bourget, David J. R.','Lukasiak, Zbigniew'],
+        title => "A paper with such nd such a tlitle",
+        date => undef
+    }
+  ),
+
+  'Documentation example'
+);
 
 
 sub same {

@@ -19,7 +19,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -102,7 +102,7 @@ sub sameWork {
     # first check if authors,date, and title are almost literally the same
     my $tsame = (lc $e->{title} eq lc $c->{title}) ? 1 : 0;
     my $asame = sameAuthors($e->{authors},$c->{authors});
-    my $dsame = ($e->{date} eq $c->{date}) ? 1 : 0;
+    my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
     my $firstsame = samePerson(cleanName(firstAuthor($e)),cleanName(firstAuthor($c)));
 
     if ($debug) {
@@ -149,7 +149,7 @@ sub sameWork {
 
     # check dates
     my $compat_dates = $dsame;
-    if (!$dsame and $e->{date} =~ /^\d\d\d\d$/ and $c->{date} =~ /^\d\d\d\d$/ ) {
+    if (!$dsame and defined $e->{date} and defined $c->{date} and $e->{date} =~ /^\d\d\d\d$/ and $c->{date} =~ /^\d\d\d\d$/ ) {
 
         $compat_dates = 0;
         #disabled for most cases because we want to conflate editions and republications for now. 
@@ -298,7 +298,7 @@ Biblio::Citation::Compare - Perl extension for performing fuzzy comparisons betw
 
 =head1 SYNOPSIS
 
-  use Biblio::Citation::Compare 'sameWork';
+  use Biblio::Citation::Compare 'sameWork','sameAuthors';
 
   sameWork(
     # first item
@@ -309,15 +309,21 @@ Biblio::Citation::Compare - Perl extension for performing fuzzy comparisons betw
     },
     # second item
     {
-        authors => ['Bourget, David J. R.','Lukasiak, Zbigniew'
+        authors => ['Bourget, David J. R.','Lukasiak, Zbigniew'],
         title => "A paper with such nd such a tlitle",
         date => undef
     }
-   );
-
-   # true!
-
   );
+
+  # true!
+
+  sameAuthors(
+    ['Dave Bourget','Z Lukasiak'],
+    ['Bourget DJR','Zbigniew Z. Lukasiak']
+  );
+
+  # true!
+
 
 =head1 DESCRIPTION
 
