@@ -19,7 +19,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -83,6 +83,7 @@ sub sameWork {
 
  	my ($e, $c, $threshold,$loose,$nolinks) = @_;
     $loose = 0 unless defined $loose;
+    $threshold = 0.15 unless $threshold;
 
     if ($debug) {
         warn "sameEntry 1: " . toString($e);
@@ -94,7 +95,6 @@ sub sameWork {
     }
 
 	return 0 if (!$c);
-    $threshold = 0.15 unless $threshold;
 
     # normalize encoding of relevant fields
     local $e->{title} = decodeHTMLEntities($e->{title});
@@ -134,6 +134,7 @@ sub sameWork {
     if (!($asame or $onesame) and my_dist_text($lname1,$lname2) / (length($lname1) + 1) > $threshold) {
         #print "$lname1, $lname2<br>";
         #print my_dist_text($lname1,$lname2); 
+        warn "authors too different" if $debug;
      	return 0;
     }
 
@@ -299,7 +300,7 @@ sub safe_decode {
 
 sub toString {
     my $h = shift;
-    print join("; ",@{$h->{authors}}) . " ($h->{date}) $h->{title}\n";
+    return join("; ",@{$h->{authors}}) . " ($h->{date}) $h->{title}\n";
 }
 
 1;
