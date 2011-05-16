@@ -165,6 +165,35 @@ check(
     1
 );
 
+# missing authors
+check(
+    ['Henry Allison'],2002,"Debating Allison on Transcendental Idealism",
+    ['John Doe','Bob Dylan','Henry Allison'],2002,"Debating Allison on Transcendental Idealism",
+    1
+);
+
+# missing authors with slight typo
+check(
+    ['H Allison'],2002,"Debating Allison on Transcendental Idealsm",
+    ['John Doe','Bob Dylan','Henry Allison'],2002,"Debating Allison on Transcendental Idealism",
+    1
+);
+
+# missing authors not clear due to date difference
+check(
+    ['Henry Allison'],2000,"Debating Allison on Transcendental Idealsm",
+    ['John Doe','Bob Dylan','Henry Allison'],2002,"Debating Allison on Transcendental Idealism",
+    1
+);
+
+# missing authors not clear due to date difference
+check(
+    ['Henry Allison'],2000,"Debating Allison on Idealsm",
+    ['John Doe','Bob Dylan','Henry Allison'],2002,"Debating Allison on Transcendental Idealism",
+    0
+);
+
+
 
 ok(
   sameWork(

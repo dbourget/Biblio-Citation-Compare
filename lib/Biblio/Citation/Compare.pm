@@ -79,9 +79,10 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 0;
+    my $debug = 1;
 
  	my ($e, $c, $threshold,$loose,$nolinks) = @_;
+    $loose = 0 unless defined $loose;
 
     if ($debug) {
         warn "sameEntry 1: " . toString($e);
@@ -105,20 +106,32 @@ sub sameWork {
     my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
     my $firstsame = samePerson(cleanName(firstAuthor($e)),cleanName(firstAuthor($c)));
 
+    # check for one author that is the same when one of the entries only has one author 
+    my $onesame = 0;
+    my @e_authors = @{$e->{authors}};
+    my @c_authors = @{$c->{authors}};
+    if (scalar @c_authors == 1) {
+        $onesame = grep { samePerson($_,$c_authors[0]) } @e_authors;
+    } elsif (scalar @e_authors == 1) {
+        $onesame = grep { samePerson($_,$e_authors[0]) } @c_authors;
+    }
+
+
     if ($debug) {
         warn "tsame: $tsame";
         warn "asame: $asame";
         warn "dsame: $dsame";
         warn "firstsame: $firstsame";
+        warn "onesame: $onesame";
     }
 
-    return 1 if ($tsame and $asame and $dsame);
+    return 1 if ($tsame and ($asame or $onesame) and $dsame);
 
 	my ($fname1,$lname1) = parseName(firstAuthor($e));
 	my ($fname2,$lname2) = parseName(firstAuthor($c));
 
 	# if authors quite different, not same
-    if (!$asame and my_dist_text($lname1,$lname2) / (length($lname1) + 1) > $threshold) {
+    if (!($asame or $onesame) and my_dist_text($lname1,$lname2) / (length($lname1) + 1) > $threshold) {
         #print "$lname1, $lname2<br>";
         #print my_dist_text($lname1,$lname2); 
      	return 0;
@@ -333,13 +346,13 @@ This module exports two subroutines which perform fuzzy comparisons between cita
 
 =head2 sameWork(hashref citation1, hashref citation2): boolean
 
-Takes as input two citations in a simple format illustrated in the synopsis. Returns true iff the two citations plausibly refer to the same work. A number of factors are taken into account to make the evaluation resistant to random variations. Among them: names are normalized and compared fuzzily using L<Text::Names>, allowances are made for random typos, allowances are made for short and long versions of titles (esp with titles containing a colon), small but important variations as in "Paper title part 1" and "Paper title part 2" are taken into account. The algorithm has been use to merge multiple data sources on L<PhilPapers.org>. 
+Takes as input two citations in a simple format illustrated in the synopsis. Returns true iff the two citations plausibly refer to the same work. A number of factors are taken into account to make the evaluation resistant to random variations. Among them: names are normalized and compared fuzzily using L<Text::Names>, allowances are made for random typos, allowances are made for short and long versions of titles (esp with titles containing a colon), small but important variations as in "Paper title part 1" and "Paper title part 2" are taken into account. The algorithm has been used to merge multiple data sources on L<PhilPapers.org>. 
 
-Some advanced additional parameters are not explained here; they can only be explained by pointing to the source code. There use should not normally be necessary.
+Some advanced additional parameters are not explained here; they can only be explained by pointing to the source code. Their use should not normally be necessary.
 
 =head2 sameAuthors(arrayref list1, arrayref list2): boolean
 
-Returns true if the two list are plausibly lists of the same authors. This is merely a convenient wrapper over L<Text::Names>::samePerson.
+Returns true if the two lists are plausibly lists of the same authors. This is merely a convenient wrapper over L<Text::Names>::samePerson.
 
 =head2 EXPORT
 
