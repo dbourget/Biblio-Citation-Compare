@@ -19,7 +19,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -79,7 +79,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 1;
+    my $debug = 0;
 
  	my ($e, $c, $threshold,$loose,$nolinks) = @_;
     $loose = 0 unless defined $loose;
