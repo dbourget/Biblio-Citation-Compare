@@ -19,7 +19,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.06';
+our $VERSION = '0.10';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -57,6 +57,9 @@ my %WIN2UTF = (
     hex('9F')=> hex('0178')#  #LATIN CAPITAL LETTER Y WITH DIAERESIS
 );
 my $PARENS = '\s*([\[\(])(.+?)([\]\)])\s*';
+my $QUOTE = '"“”`¨´‘’‛“”‟„′″‴‵‶‷⁗❛❜❝❞';
+#my $TITLE_SPLIT = '(?:\?|\:|\.|!|\&quot;|[$QUOTE]\b)';
+my $TITLE_SPLIT = '(?:\?|\:|\.|!)';
 
 sub sameAuthors {
     my ($list1, $list2) = @_;
@@ -147,7 +150,7 @@ sub sameWork {
 	return 0 if !$tsame and (
                     abs(length($e->{title}) - length($c->{title})) > 20 
                     and
-					($e->{title} !~ /:/ and $c->{title} !~ /:/)
+					($e->{title} !~ /$TITLE_SPLIT/ and $c->{title} !~ /$TITLE_SPLIT/)
                     and
 					($e->{title} !~ /$PARENS/ and $c->{title} !~ /$PARENS/)
 				); 	
@@ -207,16 +210,16 @@ sub sameWork {
     #print $score . "<br>\n";
  	return 1 if ( $score < $threshold);
 
-	# now if loose mode and only one of the titles has a ":", compare the part before ":" with the other title instead
+	# now if loose mode and only one of the titles has a ":" or other punctuation, compare the part before the punc with the other title instead
     if ($loose) {
 
         warn "loose: $str1 -- $str2" if $debug;
         return 1 if (my_dist_text($str1,$str2) / (length($str1) +1) < $threshold);
 
-        if ($e->{title} =~ /(.+):(.+)/) {
+        if ($e->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
 
             my $str1 = _strip_non_word($1);
-            if ($c->{title} =~ /(.+):(.+)/) {
+            if ($c->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
                 return 0;
             } else {
                 if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
@@ -224,7 +227,7 @@ sub sameWork {
                 }
             }
 
-        } elsif ($c->{title} =~ /(.+):(.+)/) {
+        } elsif ($c->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
 
             my $str2 = _strip_non_word($1);
             if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {

@@ -193,6 +193,31 @@ check(
     0
 );
 
+check(
+    ['J. Nagel'],1974, "What is It Like to Be a Bat? Philosophical Review",
+    ['J. Nagel'],1974, "What is It Like to Be a Bat?",
+    1
+);
+
+check(
+    ['J. Nagel'],1974, "What is It Like to Be a Bat: Philosophical Review",
+    ['J. Nagel'],1974, "What is It Like to Be a Bat:",
+    1
+);
+
+check(
+    ['J. Nagel'],1974, "What is It Like to Be a Bat. Philosophical Review",
+    ['J. Nagel'],1974, "What is It Like to Be a Bat.",
+    1
+);
+
+check(
+    ['J. Nagel'],1974, "What is It Like to Be a Bat. Philosophical Review",
+    ['J. Nagel'],1974, "What is It Like to Be a Bat",
+    1
+);
+
+
 
 
 ok(
@@ -229,4 +254,4 @@ sub check {
     return same($e1,$e2,$yes);
 }
 
-done_testing;
+done_testing();
