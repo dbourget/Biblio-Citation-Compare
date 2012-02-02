@@ -4,12 +4,12 @@ use Test::More;
 my @samePersonYes = ( 
     [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
     [ [ 'J wilson' ], ['Jessica WILSON'] ],
-    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ]
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ]
 );
 
 my @samePersonNo = (
-    [ [ 'D. Bourget', 'J Wilson' ], ['D. Chalmers', 'J Wilson'] ],
-    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ]
+    [ [ 'D. Bourget', 'J Wilson' ], ['D. Chalmers', 'J Wilson'] ]
 );
 
 ok( sameAuthors($_->[0],$_->[1]), join(";",@{$_->[0]}) . " = " . join(";",@{$_->[1]})) for @samePersonYes;
@@ -217,6 +217,23 @@ check(
     1
 );
 
+check(
+    ['Fredrik Björklund', 'Gunnar Björnsson', 'John Eriksson', 'Ragnar Francén Olinder', 'Caj Strandberg'],2012,"Recent Work on Motivational Internalism",
+    ['F. Bjorklund', 'G. Bjornsson', 'J. Eriksson', 'R. Francen Olinder', 'C. Strandberg'],2012,"Recent Work on Motivational Internalism",
+    1
+);
+
+check(
+    ['Gunnar Björnsson','Fredrik Björklund'],2012,"Recent Work on Motivational Internalism",
+    ['F. Bjorklund', 'G. Bjornsson'],2012,"Recent Work on Motivational Internalism!",
+    1
+);
+
+check(
+    ['Gunnar Björnsson'],2012,"Recent Work on Motivational Internalism",
+    ['F. Bjorklund', 'G. Bjornsson'],2012,"Recent Work on Motivational Internalism!",
+    1
+);
 
 
 

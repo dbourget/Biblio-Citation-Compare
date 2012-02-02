@@ -19,7 +19,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -63,9 +63,14 @@ my $TITLE_SPLIT = '(?:\?|\:|\.|!)';
 
 sub sameAuthors {
     my ($list1, $list2) = @_;
-    return 0 if $#$list1 != $#$list2;
-    for (my $i = 0; $i <= $#$list1; $i++) {
-        return 0 unless samePerson($list1->[$i],$list2->[$i]);
+    #return 0 if $#$list1 != $#$list2;
+    if ($#$list2 > $#$list1) {
+        my $t = $list1;
+        $list1 = $list2;
+        $list2 = $t;
+    }
+    for (my $i = 0; $i <= $#$list2; $i++) {
+        return 0 unless grep { samePerson($list2->[$i],$_) } @$list1;
     }
     return 1;
 }
@@ -107,34 +112,17 @@ sub sameWork {
     my $tsame = (lc $e->{title} eq lc $c->{title}) ? 1 : 0;
     my $asame = sameAuthors($e->{authors},$c->{authors});
     my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
-    my $firstsame = samePerson(cleanName(firstAuthor($e)),cleanName(firstAuthor($c)));
-
-    # check for one author that is the same when one of the entries only has one author 
-    my $onesame = 0;
-    my @e_authors = @{$e->{authors}};
-    my @c_authors = @{$c->{authors}};
-    if (scalar @c_authors == 1) {
-        $onesame = grep { samePerson($_,$c_authors[0]) } @e_authors;
-    } elsif (scalar @e_authors == 1) {
-        $onesame = grep { samePerson($_,$e_authors[0]) } @c_authors;
-    }
-
 
     if ($debug) {
         warn "tsame: $tsame";
         warn "asame: $asame";
         warn "dsame: $dsame";
-        warn "firstsame: $firstsame";
-        warn "onesame: $onesame";
     }
 
-    return 1 if ($tsame and ($asame or $onesame) and $dsame);
-
-	my ($fname1,$lname1) = parseName(firstAuthor($e));
-	my ($fname2,$lname2) = parseName(firstAuthor($c));
+    return 1 if ($tsame and $asame and $dsame);
 
 	# if authors quite different, not same
-    if (!($asame or $onesame) and my_dist_text($lname1,$lname2) / (length($lname1) + 1) > $threshold) {
+    if (!$asame) {
         #print "$lname1, $lname2<br>";
         #print my_dist_text($lname1,$lname2); 
         warn "authors too different" if $debug;
@@ -182,7 +170,7 @@ sub sameWork {
     } 
     
    # authors same, loosen for title 
-    if (($asame or $firstsame) and $compat_dates) {
+    if ($asame and $compat_dates) {
        $loose = 1;
     }
 
