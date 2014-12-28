@@ -9,3 +9,5 @@ Revision history for Perl extension Biblio::Citation::Compare.
     - Improved doc
 0.21  Nov 24 2012
     - Tons of improvements, stable version
+0.22  Dec 27 2014
+    - Fix for "_" in titles
