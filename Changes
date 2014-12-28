@@ -7,4 +7,5 @@ Revision history for Perl extension Biblio::Citation::Compare.
     - Fixed dependency issues
 0.03  Feb 8
     - Improved doc
-
+0.21  Nov 24 2012
+    - Tons of improvements, stable version

@@ -1,4 +1,4 @@
-use 5.010001;
+use 5.0;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -11,7 +11,7 @@ WriteMakefile(
     NAME              => 'Biblio::Citation::Compare',
     VERSION_FROM      => 'lib/Biblio/Citation/Compare.pm', # finds $VERSION
     PREREQ_PM         => {
-        'Text::Names' => 0.08,
+        'Text::Names' => 0.19,
         'Text::LevenshteinXS' => 0.03,
         'HTML::Parser' => 2.25, 
         'Test::More' => 0.96

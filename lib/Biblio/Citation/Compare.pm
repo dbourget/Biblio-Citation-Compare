@@ -1,6 +1,6 @@
 package Biblio::Citation::Compare;
 
-use 5.010001;
+use 5.0;
 use strict;
 use warnings;
 use Text::LevenshteinXS qw(distance);
@@ -19,7 +19,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.11';
+our $VERSION = '0.21';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -87,7 +87,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 0;
+    my $debug = 1;
 
  	my ($e, $c, $threshold,$loose,$nolinks) = @_;
     $loose = 0 unless defined $loose;
@@ -182,19 +182,20 @@ sub sameWork {
 
 	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
-	my $str1 = _strip_non_word($e->{title});
-	my $str2 = _strip_non_word($c->{title});
+	my $str1 = lc _strip_non_word($e->{title});
+	my $str2 = lc _strip_non_word($c->{title});
 
     # remove brackets 
     $str1 =~ s/$PARENS//g;
     $str2 =~ s/$PARENS//g;
 
-    warn "$str1 -- $str2" if $debug;
+    warn "the text comparison is: '$str1' vs '$str2'" if $debug;
     # ultimate test
     #dbg("$str1\n$str2\n");
     #dbg(my_dist_text($str1,$str2));
     my $score = (my_dist_text($str1,$str2) / (length($str1) +1));
     
+    warn "score: $score (threshold: $threshold)" if $debug;
     #print $score . "<br>\n";
  	return 1 if ( $score < $threshold);
 
@@ -234,8 +235,10 @@ sub sameWork {
 
 sub _strip_non_word {
     my $str = shift;
-    $str =~ s/[^\w\)\]\(\[]+/ /g;
+    $str =~ s/[^[0-9a-zA-Z\)\]\(\[]+/ /g;
     $str =~ s/\s+/ /g;
+    $str =~ s/^\s+//;
+    $str =~ s/\s+$//;
     $str; 
 }
 

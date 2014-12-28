@@ -9,6 +9,7 @@ my @samePersonYes = (
 );
 
 my @samePersonNo = (
+    [ [ 'Hunter, David' ], ['Hunter, Daniel'] ],
     [ [ 'D. Bourget', 'J Wilson' ], ['D. Chalmers', 'J Wilson'] ]
 );
 
@@ -232,6 +233,12 @@ check(
 check(
     ['Gunnar Björnsson'],2012,"Recent Work on Motivational Internalism",
     ['F. Bjorklund', 'G. Bjornsson'],2012,"Recent Work on Motivational Internalism!",
+    1
+);
+
+check(
+    ['Uriah Kriegel'],2011,"The Sources of Intentionality",
+    ['Uriah Kriegel'],2014,"_The Sources of Intentionality_",
     1
 );
 
