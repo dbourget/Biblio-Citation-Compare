@@ -2,10 +2,6 @@ use 5.0;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
-use Text::LevenshteinXS qw(distance);
-use HTML::Entities;
-use Text::Names qw/samePerson cleanName parseName/;
-
 
 WriteMakefile(
     NAME              => 'Biblio::Citation::Compare',

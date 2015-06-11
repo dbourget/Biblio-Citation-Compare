@@ -6,20 +6,21 @@ use warnings;
 use Text::LevenshteinXS qw(distance);
 use HTML::Entities;
 use Text::Names qw/samePerson cleanName parseName/;
+use utf8;
 
 require Exporter;
 
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	sameWork sameAuthors toString
+	sameWork sameAuthors toString extractEdition
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.22';
+our $VERSION = '0.4';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -56,8 +57,17 @@ my %WIN2UTF = (
     hex('9E')=> hex('017E'),#  #LATIN SMALL LETTER Z WITH CARON
     hex('9F')=> hex('0178')#  #LATIN CAPITAL LETTER Y WITH DIAERESIS
 );
-my $PARENS = '\s*([\[\(])(.+?)([\]\)])\s*';
+my $PARENS = '\s*[\[\(](.+?)[\]\)]\s*';
 my $QUOTE = '"“”`¨´‘’‛“”‟„′″‴‵‶‷⁗❛❜❝❞';
+my @ED_RES = (
+    '(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)',
+    '([1-9])\s?\w{2,5}\s[ée]d',
+    '\bv\.?(?:ersion)?\s?([0-9IXV]+)',
+    '\s([IXV0-9]+)(?:$|:)'
+);
+
+#die "no" unless "2nd edition" =~ /$EDITION/i;
+
 #my $TITLE_SPLIT = '(?:\?|\:|\.|!|\&quot;|[$QUOTE]\b)';
 my $TITLE_SPLIT = '(?:\?|\:|\.|!)';
 
@@ -87,7 +97,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 1;
+    my $debug = 0;
 
  	my ($e, $c, $threshold,$loose,$nolinks) = @_;
     $loose = 0 unless defined $loose;
@@ -128,10 +138,6 @@ sub sameWork {
         warn "authors too different" if $debug;
      	return 0;
     }
-
-    warn "pre number check" if $debug;
-	# if titles differ by a number, not the same
-	return 0 if !$tsame and numdiff($e->{title},$c->{title});
 
     warn "pre title length" if $debug;
 	# if title very different in lengths and do not contain ":" or brackets, not the same
@@ -185,11 +191,29 @@ sub sameWork {
 	my $str1 = lc _strip_non_word($e->{title});
 	my $str2 = lc _strip_non_word($c->{title});
 
+    # check for edition strings
+    my $ed1 = extractEdition($str1);
+    my $ed2 = extractEdition($str2);
+    warn "ed1: $ed1" if $debug;
+    warn "ed2: $ed2" if $debug;
+
+    return 0 if ($ed1 and !$ed2) or ($ed2 and !$ed1) or ($ed1 && $ed1 != $ed2);
+    warn "not diff editions" if $debug;
+
     # remove brackets 
+    my ($parens1,$parens2);
     $str1 =~ s/$PARENS//g;
+    $parens1 = $1;
     $str2 =~ s/$PARENS//g;
+    $parens2 = $1;
+    return 0 if $parens1 && $parens2 && numdiff($parens1,$parens2);
 
     warn "the text comparison is: '$str1' vs '$str2'" if $debug;
+
+    warn "pre number check" if $debug;
+	# if titles differ by a number, not the same
+	return 0 if numdiff($str1,$str2);
+
     # ultimate test
     #dbg("$str1\n$str2\n");
     #dbg(my_dist_text($str1,$str2));
@@ -242,11 +266,56 @@ sub _strip_non_word {
     $str; 
 }
 
+my %nums = (
+    first => 1,
+    second => 2,
+    third => 3,
+    fourth => 4,
+    fifth => 5,
+    sixth => 6,
+    seventh => 7,
+    eighth => 8,
+    ninth => 9,
+    tenth => 10,
+    I => 1,
+    II => 2,
+    III => 3,
+    IV => 4,
+    V => 5,
+    VI => 6,
+    VII => 7,
+    VIII => 8,
+    IX => 9,
+    X => 10,
+);
+sub extract_num {
+    my $s = shift;
+    if ($s =~ /\b(\d+)/) {
+        return $1;
+    }
+    for my $n (keys %nums) {
+        if ($s =~ /\b$n\b/i) {
+            return $nums{$n};
+        }
+    }
+    return $s;
+}
+
+sub extractEdition {
+    my $s = shift;
+    for my $re (@ED_RES) {
+        if ($s =~ /$re/i) {
+            return extract_num($1);
+        }
+    }
+    return undef;
+}
+
 sub numdiff {
 	my ($s1,$s2) = @_;
 	#print "----checking numdiff (($s1,$s2))\n";
-    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|1st|2nd|3rd|4th)\b/ig);
-    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|1st|2nd|3rd|4th)\b/ig);
+    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|sixth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)\b/ig);
+    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|sixth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)\b/ig);
     #print "In s1:" . join(",",@n1) . "\n";
     #print "In s2:" . join(",",@n2) . "\n";
     return 0 if $#n1 ne $#n2;
