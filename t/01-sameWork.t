@@ -1,3 +1,4 @@
+use lib '../lib';
 use Biblio::Citation::Compare 'sameWork','sameAuthors','toString';
 use Test::More;
 

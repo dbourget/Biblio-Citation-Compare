@@ -20,7 +20,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.4';
+our $VERSION = '0.51';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -72,7 +72,7 @@ my @ED_RES = (
 my $TITLE_SPLIT = '(?:\?|\:|\.|!)';
 
 sub sameAuthors {
-    my ($list1, $list2) = @_;
+    my ($list1, $list2, %opts) = @_;
     #return 0 if $#$list1 != $#$list2;
     if ($#$list2 > $#$list1) {
         my $t = $list1;
@@ -80,7 +80,7 @@ sub sameAuthors {
         $list2 = $t;
     }
     for (my $i = 0; $i <= $#$list2; $i++) {
-        return 0 unless grep { samePerson($list2->[$i],$_) } @$list1;
+        return 0 unless grep { samePerson($list2->[$i],$_, %opts) } @$list1;
     }
     return 1;
 }

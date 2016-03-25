@@ -20,3 +20,4 @@ for my $k (sort keys %tests) {
     is(Biblio::Citation::Compare::extractEdition($k),$tests{$k},"$k => $tests{$k}");
 }
 
+done_testing
