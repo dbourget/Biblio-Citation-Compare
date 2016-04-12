@@ -99,17 +99,33 @@ sub sameWork {
 
     my $debug = 0;
 
- 	my ($e, $c, $threshold,$loose,$nolinks) = @_;
+ 	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
     $loose = 0 unless defined $loose;
     $threshold = 0.15 unless $threshold;
+    $opts{loose} = 1 if $loose;
 
     if ($debug) {
         warn "sameEntry 1: " . toString($e);
         warn "sameEntry 2: " . toString($c);
     }
 
+    # if dates are too far apart, this is probably not a typing issue
+    unless ($opts{no_date_distance}) {
+        if ($e->date =~ /^\d\d\d\d$/ and $e->date =~ /^\d\d\d\d$/ and ($e->date - $c->date > 3 or $c->date - $e->date > 3)) {
+            return 0;
+        }
+    }
+
     if (defined $e->{doi} and length $e->{doi} and defined $c->{doi} and length $c->{doi}) {
-        return 1 if $e->{doi} eq $c->{doi};
+        if ($e->{doi} eq $c->{doi}) {
+            # we don't use doi to say 1 because often we have dois that are for a whole issue
+            # however same doi lowers the threshold
+            $threshold /= 2 if $e->{doi} eq $c->{doi};
+            $loose = 1;
+            $opts{loose} = 1;
+        } else {
+            return 0;
+        }
     }
 
 	return 0 if (!$c);
@@ -120,7 +136,7 @@ sub sameWork {
 
     # first check if authors,date, and title are almost literally the same
     my $tsame = (lc $e->{title} eq lc $c->{title}) ? 1 : 0;
-    my $asame = sameAuthors($e->{authors},$c->{authors});
+    my $asame = sameAuthors($e->{authors},$c->{authors},%opts);
     my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
 
     if ($debug) {
