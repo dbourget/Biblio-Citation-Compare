@@ -20,7 +20,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.51';
+our $VERSION = '0.52';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -97,7 +97,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 0;
+    my $debug = 1;
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
     $loose = 0 unless defined $loose;
@@ -111,8 +111,14 @@ sub sameWork {
 
     # if dates are too far apart, this is probably not a typing issue
     unless ($opts{no_date_distance}) {
+        # diff dates, far apart
         if ($e->date =~ /^\d\d\d\d$/ and $e->date =~ /^\d\d\d\d$/ and ($e->date - $c->date > 3 or $c->date - $e->date > 3)) {
-            return 0;
+            # allow if loose, but lower threshold
+            if ($opts{loose}) {
+                $threshold /= 2;
+            } else {
+                return 0;
+            }
         }
     }
 
