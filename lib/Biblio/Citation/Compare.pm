@@ -73,7 +73,7 @@ my $TITLE_SPLIT = '(?:\?|\:|\.|!)';
 
 sub sameAuthors {
     my ($list1, $list2, %opts) = @_;
-    #return 0 if $#$list1 != $#$list2;
+    return 0 if $#$list1 != $#$list2 and $opts{strict};
     if ($#$list2 > $#$list1) {
         my $t = $list1;
         $list1 = $list2;
@@ -142,7 +142,7 @@ sub sameWork {
 
     # first check if authors,date, and title are almost literally the same
     my $tsame = (lc $e->{title} eq lc $c->{title}) ? 1 : 0;
-    my $asame = sameAuthors($e->{authors},$c->{authors},%opts);
+    my $asame = sameAuthors($e->{authors},$c->{authors},strict=>0);
     my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
 
     if ($debug) {
@@ -155,11 +155,12 @@ sub sameWork {
 
 	# if authors quite different, not same
     if (!$asame) {
-        #print "$lname1, $lname2<br>";
-        #print my_dist_text($lname1,$lname2); 
         warn "authors too different" if $debug;
      	return 0;
     }
+
+    # if date is different and authors are not identical, not the same (maybe a different edition)
+    return 0 if !$dsame and !sameAuthors($e->{authors},$c->{authors},strict=>1);
 
     warn "pre title length" if $debug;
 	# if title very different in lengths and do not contain ":" or brackets, not the same
