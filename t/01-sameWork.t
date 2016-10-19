@@ -1,6 +1,7 @@
 use lib '../lib';
 use Biblio::Citation::Compare 'sameWork','sameAuthors','toString';
-use Test::More;
+use Test::Most;
+die_on_fail;
 
 my @samePersonYes = ( 
     [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],

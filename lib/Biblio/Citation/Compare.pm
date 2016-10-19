@@ -97,7 +97,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 0;
+    my $debug = 1;
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
     $loose = 0 unless defined $loose;
@@ -107,19 +107,6 @@ sub sameWork {
     if ($debug) {
         warn "sameEntry 1: " . toString($e);
         warn "sameEntry 2: " . toString($c);
-    }
-
-    # if dates are too far apart, this is probably not a typing issue
-    unless ($opts{no_date_distance}) {
-        # diff dates, far apart
-        if ($e->{date} =~ /^\d\d\d\d$/ and $e->{date} =~ /^\d\d\d\d$/ and ($e->{date} - $c->{date} > 3 or $c->{date} - $e->{date} > 3)) {
-            # allow if loose, but lower threshold
-            if ($opts{loose}) {
-                $threshold /= 2;
-            } else {
-                return 0;
-            }
-        }
     }
 
     if (defined $e->{doi} and length $e->{doi} and defined $c->{doi} and length $c->{doi}) {
@@ -142,25 +129,68 @@ sub sameWork {
 
     # first check if authors,date, and title are almost literally the same
     my $tsame = (lc $e->{title} eq lc $c->{title}) ? 1 : 0;
-    my $asame = sameAuthors($e->{authors},$c->{authors},strict=>0);
+    my $asame = sameAuthors($e->{authors},$c->{authors},strict=>1);
+    my $asame_loose = $asame || sameAuthors($e->{authors},$c->{authors},strict=>0); #asame_loose will be 1 while same is 0 when there are extra authors in one paper but all overlap authors match
     my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
 
     if ($debug) {
         warn "tsame: $tsame";
         warn "asame: $asame";
+        warn "asame_loose: $asame_loose";
         warn "dsame: $dsame";
     }
 
     return 1 if ($tsame and $asame and $dsame);
 
 	# if authors quite different, not same
-    if (!$asame) {
+    if (!$asame_loose) {
         warn "authors too different" if $debug;
      	return 0;
     }
 
-    # if date is different and authors are not identical, not the same (maybe a different edition)
-    return 0 if !$dsame and !sameAuthors($e->{authors},$c->{authors},strict=>1);
+    # check dates
+    my $date_wildcards = '^forthcoming|in press|manuscript|unknown|web$';
+    my $compat_dates = ($dsame or $e->{date} =~ /$date_wildcards/ or $c->{date} =~ /$date_wildcards/);
+    if (!$dsame and !$compat_dates) {
+
+        #disabled for most cases because we want to conflate editions and republications for now. 
+        if ($e->{title} =~ /^Introduction.?$/ or $e->{title} =~ /^Preface.?$/) {
+            return 0 if ($e->{source} and $e->{source} ne $c->{source}) or 
+                        ($e->{volume} and $e->{volume} ne $c->{volume});
+        }
+
+        # numeric dates
+        if ($e->{date} =~ /^\d\d\d\d$/ and $c->{date} =~ /^\d\d\d\d$/) {
+            my $date_diff = $e->{date} - $c->{date};            
+            # quite often people misremember dates so we permit some slack
+            # we will consider the dates compat if they close in time
+            # if dates are far apart, we know they are not exactly the same publicatoins. 
+            # but they might be reprints of the same thing, which we want to conflate. 
+            if ($date_diff > 3 or $date_diff < -3) {
+                if ($asame) {
+                    $threshold /= 2;
+                    warn "dates different, lowering similarity threshold" if $debug;
+                } else {
+                    warn "dates+authors too different" if $debug;
+                    return 0;
+                }
+
+            } else {
+                # nearby date
+                $threshold /= 2;
+            }
+
+        } else {
+            #messed up dates, assume the worst
+            $threshold /=2;
+        }
+
+    } else {
+        $loose = 1 if $asame_loose;
+    }
+    
+
+
 
     warn "pre title length" if $debug;
 	# if title very different in lengths and do not contain ":" or brackets, not the same
@@ -179,28 +209,6 @@ sub sameWork {
 #            print "Links c:\n" . join("\n",$c->getLinks);
             return 1 if grep { $l eq $_} @{$c->{links}};
         }
-    }
-
-    # check dates
-    my $compat_dates = $dsame;
-    if (!$dsame and defined $e->{date} and defined $c->{date} and $e->{date} =~ /^\d\d\d\d$/ and $c->{date} =~ /^\d\d\d\d$/ ) {
-
-        $compat_dates = 0;
-        #disabled for most cases because we want to conflate editions and republications for now. 
-        if ($e->{title} =~ /^Introduction.?$/ or $e->{title} =~ /^Preface.?$/) {
-            return 0 if ($e->{source} and $e->{source} ne $c->{source}) or 
-                        ($e->{volume} and $e->{volume} ne $c->{volume});
-        }
-        if ($loose) {
-            $threshold /= 2;
-        } else {
-            $threshold /= 3;
-        }
-    } 
-    
-   # authors same, loosen for title 
-    if ($asame and $compat_dates) {
-       $loose = 1;
     }
 
     warn "pre loose mode: loose = $loose" if $debug;
