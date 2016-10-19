@@ -112,7 +112,7 @@ sub sameWork {
     # if dates are too far apart, this is probably not a typing issue
     unless ($opts{no_date_distance}) {
         # diff dates, far apart
-        if ($e->date =~ /^\d\d\d\d$/ and $e->date =~ /^\d\d\d\d$/ and ($e->date - $c->date > 3 or $c->date - $e->date > 3)) {
+        if ($e->{date} =~ /^\d\d\d\d$/ and $e->{date} =~ /^\d\d\d\d$/ and ($e->{date} - $c->{date} > 3 or $c->{date} - $e->{date} > 3)) {
             # allow if loose, but lower threshold
             if ($opts{loose}) {
                 $threshold /= 2;
