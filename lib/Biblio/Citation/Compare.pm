@@ -97,7 +97,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 1;
+    my $debug = 0;
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
     $loose = 0 unless defined $loose;
