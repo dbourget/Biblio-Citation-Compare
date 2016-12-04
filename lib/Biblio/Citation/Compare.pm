@@ -294,13 +294,20 @@ sub sameWork {
 sub sameAuthorBits {
     my ($a, $b) = @_;
     my (@alist, @blist);
-    for (@$a) { push @alist, split(/\s+/, parseName2($_)); }
-    for (@$b) { push @blist, split(/\s+/, parseName2($_)); }
+    for (@$a) { 
+        s/,//;
+        push @alist, split(/\s+/, $_); 
+    }
+    for (@$b) { 
+        s/,//;
+        push @blist, split(/\s+/, $_); 
+    }
+#    use Data::Dumper;
     @alist = sort @alist;
     @blist = sort @blist;
     return 0 if $#alist != $#blist;
     for (my $i=0; $i<= $#alist; $i++) {
-        return 0 if $alist[$i] ne $blist[$i];
+        return 0 if lc $alist[$i] ne lc $blist[$i];
     }
     return 1;
 }

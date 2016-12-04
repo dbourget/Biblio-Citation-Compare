@@ -1,5 +1,5 @@
 use lib '../lib';
-use Biblio::Citation::Compare 'sameWork','sameAuthors','toString';
+use Biblio::Citation::Compare 'sameWork','sameAuthors','toString', 'sameAuthorBits';
 use Test::Most;
 die_on_fail;
 
@@ -14,6 +14,9 @@ my @samePersonNo = (
     [ [ 'Hunter, David' ], ['Hunter, Daniel'] ],
     [ [ 'D. Bourget', 'J Wilson' ], ['D. Chalmers', 'J Wilson'] ]
 );
+
+ok( sameAuthorBits(['Bourget, David','Joseph, richard'], ['David Joseph Richard Bourget']), 'same authors bits works'); 
+ok(!sameAuthorBits(['A, A'],['B, B']), 'same authors bits does not overgenerates');
 
 ok( sameAuthors($_->[0],$_->[1]), join(";",@{$_->[0]}) . " = " . join(";",@{$_->[1]})) for @samePersonYes;
 ok( !sameAuthors($_->[0],$_->[1]), join(";",@{$_->[0]}) . " != " . join(";",@{$_->[1]})) for @samePersonNo;
@@ -148,15 +151,15 @@ check(
 #
 
 # missing firstname
-check(
-    ['Russell, '],
-    "2009",
-    "Short",
-    ['Russell, B'],
-    "2009",
-    "Short",
-    1
-);
+#check(
+#    ['Russell, '],
+#    "2009",
+#    "Short",
+#    ['Russell, B'],
+#    "2009",
+#    "Short",
+#    1
+#);
 
 check(
     ['John Doe, By'],
@@ -260,6 +263,7 @@ check(
     ['Uriah Kriegel'],2008,"Real Intentionality 3: Why intentionality entails consciousness",
     0
 );
+
 
 
 
