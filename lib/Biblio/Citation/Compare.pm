@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Text::LevenshteinXS qw(distance);
 use HTML::Entities;
-use Text::Names qw/samePerson cleanName parseName/;
+use Text::Names qw/samePerson cleanName parseName parseName2/;
 use utf8;
 
 require Exporter;
@@ -13,7 +13,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	sameWork sameAuthors toString extractEdition
+	sameWork sameAuthors toString extractEdition sameAuthorBits
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -97,7 +97,7 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 0;
+    my $debug = 1;
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
     $loose = 0 unless defined $loose;
@@ -131,22 +131,25 @@ sub sameWork {
     my $tsame = (lc $e->{title} eq lc $c->{title}) ? 1 : 0;
     my $asame = sameAuthors($e->{authors},$c->{authors},strict=>1);
     my $asame_loose = $asame || sameAuthors($e->{authors},$c->{authors},strict=>0); #asame_loose will be 1 while same is 0 when there are extra authors in one paper but all overlap authors match
+    my $asame_bits = $asame_loose || sameAuthorBits($e->{authors},$c->{authors});
     my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
 
     if ($debug) {
         warn "tsame: $tsame";
         warn "asame: $asame";
         warn "asame_loose: $asame_loose";
+        warn "asame_bits: $asame_bits";
         warn "dsame: $dsame";
     }
 
     return 1 if ($tsame and $asame and $dsame);
 
 	# if authors quite different, not same
-    if (!$asame_loose) {
+    if (!$asame_bits) {
         warn "authors too different" if $debug;
      	return 0;
     }
+    # at this point the authors are plausibly the same
 
     # check dates
     my $date_wildcards = '^forthcoming|in press|manuscript|unknown|web$';
@@ -167,7 +170,7 @@ sub sameWork {
             # if dates are far apart, we know they are not exactly the same publicatoins. 
             # but they might be reprints of the same thing, which we want to conflate. 
             if ($date_diff > 3 or $date_diff < -3) {
-                if ($asame) {
+                if ($asame_bits) {
                     $threshold /= 2;
                     warn "dates different, lowering similarity threshold" if $debug;
                 } else {
@@ -186,7 +189,7 @@ sub sameWork {
         }
 
     } else {
-        $loose = 1 if $asame_loose;
+        $loose = 1 if $asame_loose or $asame_bits;
     }
     
 
@@ -286,6 +289,20 @@ sub sameWork {
     }
         
     return 0;
+}
+
+sub sameAuthorBits {
+    my ($a, $b) = @_;
+    my (@alist, @blist);
+    for (@$a) { push @alist, split(/\s+/, parseName2($_)); }
+    for (@$b) { push @blist, split(/\s+/, parseName2($_)); }
+    @alist = sort @alist;
+    @blist = sort @blist;
+    return 0 if $#alist != $#blist;
+    for (my $i=0; $i<= $#alist; $i++) {
+        return 0 if $alist[$i] ne $blist[$i];
+    }
+    return 1;
 }
 
 sub _strip_non_word {
