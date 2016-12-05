@@ -160,6 +160,15 @@ check(
 #    "Short",
 #    1
 #);
+check(
+    ['Bourget, David'],
+    2008,
+    "The title of the work",
+    ['Other, Person'],
+    2008,
+    "The title of the work",
+    0
+);
 
 check(
     ['John Doe, By'],
