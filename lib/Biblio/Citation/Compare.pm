@@ -293,7 +293,6 @@ sub sameWork {
 
 sub sameAuthorBits {
     my ($a, $b) = @_;
-    warn join(";", @$a);
     my (@alist, @blist);
     for (@$a) { 
         my $v = $_; # we copy so we don't modify the original
