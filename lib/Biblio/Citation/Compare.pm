@@ -6,6 +6,7 @@ use warnings;
 use Text::LevenshteinXS qw(distance);
 use HTML::Entities;
 use Text::Names qw/samePerson cleanName parseName parseName2/;
+use Text::Roman qw/isroman roman2int/;
 use utf8;
 
 require Exporter;
@@ -332,16 +333,6 @@ my %nums = (
     eighth => 8,
     ninth => 9,
     tenth => 10,
-    I => 1,
-    II => 2,
-    III => 3,
-    IV => 4,
-    V => 5,
-    VI => 6,
-    VII => 7,
-    VIII => 8,
-    IX => 9,
-    X => 10,
 );
 sub extract_num {
     my $s = shift;
@@ -349,9 +340,13 @@ sub extract_num {
         return $1;
     }
     for my $n (keys %nums) {
+        if (isroman($s)) {
+            return roman2int($s);
+        }
         if ($s =~ /\b$n\b/i) {
             return $nums{$n};
         }
+
     }
     return $s;
 }

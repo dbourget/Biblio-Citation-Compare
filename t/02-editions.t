@@ -12,6 +12,7 @@ my %tests = (
     "title 2: bla" => 2,
     "title V X" => 10,
     "3ieme éd." => 3,
+    "totle xxvi" => 26,
     "A title with I in the middle" => undef,
     "no edition" => undef,
 );
