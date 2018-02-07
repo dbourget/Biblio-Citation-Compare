@@ -21,7 +21,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.52';
+our $VERSION = '0.53';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -296,12 +296,14 @@ sub sameAuthorBits {
     my ($a, $b) = @_;
     my (@alist, @blist);
     for (@$a) { 
-        s/,//;
-        push @alist, split(/\s+/, $_); 
+        my $v = $_; # we copy so we don't modify the original
+        $v =~ s/,//;
+        push @alist, split(/\s+/, $v); 
     }
     for (@$b) { 
-        s/,//;
-        push @blist, split(/\s+/, $_); 
+        my $v = $_;
+        $v =~ s/,//;
+        push @blist, split(/\s+/, $v); 
     }
 #    use Data::Dumper;
     @alist = sort @alist;
