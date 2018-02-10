@@ -207,13 +207,13 @@ sub sameWork {
 				); 	
 
 	# Compare links
-    if (!$nolinks) {
-        foreach my $l (@{$e->{links}}) {
+#    if (!$nolinks) {
+#        foreach my $l (@{$e->{links}}) {
 #            print "Links e:\n" . join("\n",$e->getLinks);
 #            print "Links c:\n" . join("\n",$c->getLinks);
-            return 1 if grep { $l eq $_} @{$c->{links}};
-        }
-    }
+#            return 1 if grep { $l eq $_} @{$c->{links}};
+#        }
+#    }
 
     warn "pre loose mode: loose = $loose" if $debug;
 
