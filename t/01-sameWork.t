@@ -34,6 +34,12 @@ $e1->{title} = "Chapter 1 of xyz";
 $e2->{title} = "Chapter 2 of xyz";
 same($e1,$e2,0);
 
+# Test numeric difference
+$e1->{title} = "Chapter one of xyz";
+$e2->{title} = "Chapter two of xyz";
+same($e1,$e2,0);
+
+
 $e1->{title} = "IV- The first pakladjs lkasdjf ";
 $e2->{title} = "X- The first pakladjs lkasdjft ";
 same($e1,$e2,0);

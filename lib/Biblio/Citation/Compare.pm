@@ -341,10 +341,11 @@ sub extract_num {
     if ($s =~ /\b(\d+)/) {
         return $1;
     }
+    if (isroman($s)) {
+        return roman2int($s);
+    }
+
     for my $n (keys %nums) {
-        if (isroman($s)) {
-            return roman2int($s);
-        }
         if ($s =~ /\b$n\b/i) {
             return $nums{$n};
         }
@@ -366,8 +367,8 @@ sub extractEdition {
 sub numdiff {
 	my ($s1,$s2) = @_;
 	#print "----checking numdiff (($s1,$s2))\n";
-    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|sixth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)\b/ig);
-    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|sixth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)\b/ig);
+    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
+    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
     #print "In s1:" . join(",",@n1) . "\n";
     #print "In s2:" . join(",",@n2) . "\n";
     return 0 if $#n1 ne $#n2;
