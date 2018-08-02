@@ -298,22 +298,38 @@ sub sameAuthorBits {
     for (@$a) { 
         my $v = $_; # we copy so we don't modify the original
         $v =~ s/,//;
+        $v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
         push @alist, split(/\s+/, $v); 
     }
     for (@$b) { 
         my $v = $_;
         $v =~ s/,//;
+        $v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
         push @blist, split(/\s+/, $v); 
     }
 #    use Data::Dumper;
     @alist = sort @alist;
     @blist = sort @blist;
+#    print Dumper(\@alist);
+#    print Dumper(\@blist);
     return 0 if $#alist != $#blist;
     for (my $i=0; $i<= $#alist; $i++) {
         return 0 if lc $alist[$i] ne lc $blist[$i];
     }
     return 1;
 }
+
+#wip
+#sub author_bits {
+#    my $list_ref = shift;
+#    my @new;
+#    for (@$list_ref) { 
+#        my $v = $_; # we copy so we don't modify the original
+#        $v =~ s/,//;
+#        $v =~ s/(\p{Ll}\p
+#        push @alist, split(/\s+/, $v); 
+#    }
+#}
 
 sub _strip_non_word {
     my $str = shift;
