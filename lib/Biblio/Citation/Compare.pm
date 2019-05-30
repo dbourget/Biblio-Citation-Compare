@@ -6,6 +6,7 @@ use warnings;
 use Text::LevenshteinXS qw(distance);
 use HTML::Entities;
 use Text::Names qw/samePerson cleanName parseName parseName2/;
+use Text::Roman qw/isroman roman2int/;
 use utf8;
 
 require Exporter;
@@ -206,13 +207,13 @@ sub sameWork {
 				); 	
 
 	# Compare links
-    if (!$nolinks) {
-        foreach my $l (@{$e->{links}}) {
+#    if (!$nolinks) {
+#        foreach my $l (@{$e->{links}}) {
 #            print "Links e:\n" . join("\n",$e->getLinks);
 #            print "Links c:\n" . join("\n",$c->getLinks);
-            return 1 if grep { $l eq $_} @{$c->{links}};
-        }
-    }
+#            return 1 if grep { $l eq $_} @{$c->{links}};
+#        }
+#    }
 
     warn "pre loose mode: loose = $loose" if $debug;
 
@@ -295,22 +296,40 @@ sub sameAuthorBits {
     my ($a, $b) = @_;
     my (@alist, @blist);
     for (@$a) { 
-        s/,//;
-        push @alist, split(/\s+/, $_); 
+        my $v = $_; # we copy so we don't modify the original
+        $v =~ s/,//;
+        $v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
+        push @alist, split(/\s+/, $v); 
     }
     for (@$b) { 
-        s/,//;
-        push @blist, split(/\s+/, $_); 
+        my $v = $_;
+        $v =~ s/,//;
+        $v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
+        push @blist, split(/\s+/, $v); 
     }
 #    use Data::Dumper;
     @alist = sort @alist;
     @blist = sort @blist;
+#    print Dumper(\@alist);
+#    print Dumper(\@blist);
     return 0 if $#alist != $#blist;
     for (my $i=0; $i<= $#alist; $i++) {
         return 0 if lc $alist[$i] ne lc $blist[$i];
     }
     return 1;
 }
+
+#wip
+#sub author_bits {
+#    my $list_ref = shift;
+#    my @new;
+#    for (@$list_ref) { 
+#        my $v = $_; # we copy so we don't modify the original
+#        $v =~ s/,//;
+#        $v =~ s/(\p{Ll}\p
+#        push @alist, split(/\s+/, $v); 
+#    }
+#}
 
 sub _strip_non_word {
     my $str = shift;
@@ -337,26 +356,21 @@ my %nums = (
     eighth => 8,
     ninth => 9,
     tenth => 10,
-    I => 1,
-    II => 2,
-    III => 3,
-    IV => 4,
-    V => 5,
-    VI => 6,
-    VII => 7,
-    VIII => 8,
-    IX => 9,
-    X => 10,
 );
 sub extract_num {
     my $s = shift;
     if ($s =~ /\b(\d+)/) {
         return $1;
     }
+    if (isroman($s)) {
+        return roman2int($s);
+    }
+
     for my $n (keys %nums) {
         if ($s =~ /\b$n\b/i) {
             return $nums{$n};
         }
+
     }
     return $s;
 }
@@ -374,8 +388,8 @@ sub extractEdition {
 sub numdiff {
 	my ($s1,$s2) = @_;
 	#print "----checking numdiff (($s1,$s2))\n";
-    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|sixth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)\b/ig);
-    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|first|second|third|fourth|fifth|sixth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)\b/ig);
+    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
+    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
     #print "In s1:" . join(",",@n1) . "\n";
     #print "In s2:" . join(",",@n2) . "\n";
     return 0 if $#n1 ne $#n2;
