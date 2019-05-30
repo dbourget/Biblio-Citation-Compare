@@ -20,7 +20,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.52';
+our $VERSION = '0.53';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -230,6 +230,7 @@ sub sameWork {
     my $ed2 = extractEdition($str2);
     warn "ed1: $ed1" if $debug;
     warn "ed2: $ed2" if $debug;
+    $loose =1 if $ed1 and $ed2 and $ed1 == $ed2 and !$dsame and $asame_loose;
 
     return 0 if ($ed1 and !$ed2) or ($ed2 and !$ed1) or ($ed1 && $ed1 != $ed2);
     warn "not diff editions" if $debug;
@@ -261,7 +262,6 @@ sub sameWork {
     if ($loose) {
 
         warn "loose: $str1 -- $str2" if $debug;
-        return 1 if (my_dist_text($str1,$str2) / (length($str1) +1) < $threshold);
 
         if ($e->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
 
@@ -314,7 +314,12 @@ sub sameAuthorBits {
 
 sub _strip_non_word {
     my $str = shift;
-    $str =~ s/[^[0-9a-zA-Z\)\]\(\[]+/ /g;
+    #abbreviation "volume" v
+    $str =~ s/\bvolume\b/v/gi;
+    $str =~ s/\bvol\.?\b/v/gi;
+    $str =~ s/\bv\.\b/v/gi;
+
+  $str =~ s/[^[0-9a-zA-Z\)\]\(\[]+/ /g;
     $str =~ s/\s+/ /g;
     $str =~ s/^\s+//;
     $str =~ s/\s+$//;
