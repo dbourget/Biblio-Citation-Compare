@@ -14,7 +14,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	sameWork sameAuthors toString extractEdition sameAuthorBits
+	sameWork sameAuthors toString extractEdition sameAuthorBits sameTitle
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -438,6 +438,11 @@ sub safe_decode {
 sub toString {
     my $h = shift;
     return join("; ",@{$h->{authors}}) . " ($h->{date}) $h->{title}\n";
+}
+
+sub sameTitle {
+  my ($a, $b, $threshold,$loose,$nolinks,%opts) = @_;
+  return sameWork({ title => $a }, { title => $b }, $threshold,$loose,$nolinks,%opts);
 }
 
 1;
