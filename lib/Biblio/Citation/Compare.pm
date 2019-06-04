@@ -264,10 +264,10 @@ sub sameWork {
 
         warn "loose: $str1 -- $str2" if $debug;
 
-        if ($e->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
+        if ($e->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
             my $str1 = _strip_non_word($1);
-            if ($c->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
+            if ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
                 return 0;
             } else {
                 if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
@@ -275,7 +275,7 @@ sub sameWork {
                 }
             }
 
-        } elsif ($c->{title} =~ /(.+)\s*$TITLE_SPLIT\s*(.+)/) {
+        } elsif ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
             my $str2 = _strip_non_word($1);
             if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
