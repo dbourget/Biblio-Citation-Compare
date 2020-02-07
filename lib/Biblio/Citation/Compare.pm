@@ -14,7 +14,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	sameWork sameAuthors toString extractEdition sameAuthorBits sameTitle
+	sameWork sameAuthors toString extractEdition sameAuthorBits sameTitle sameAuthorsLoose
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -154,7 +154,7 @@ sub sameWork {
 
     # check dates
     my $date_wildcards = '^forthcoming|in press|manuscript|unknown|web$';
-    my $compat_dates = ($dsame or $e->{date} =~ /$date_wildcards/ or $c->{date} =~ /$date_wildcards/);
+    my $compat_dates = ($dsame or ($e->{date} && $e->{date} =~ /$date_wildcards/) or ($c->{date} && $c->{date} =~ /$date_wildcards/));
     if (!$dsame and !$compat_dates) {
 
         #disabled for most cases because we want to conflate editions and republications for now. 
@@ -164,7 +164,7 @@ sub sameWork {
         }
 
         # numeric dates
-        if ($e->{date} =~ /^\d\d\d\d$/ and $c->{date} =~ /^\d\d\d\d$/) {
+        if ($e->{date} and $e->{date} =~ /^\d\d\d\d$/ and $c->{date} and $c->{date} =~ /^\d\d\d\d$/) {
             my $date_diff = $e->{date} - $c->{date};            
             # quite often people misremember dates so we permit some slack
             # we will consider the dates compat if they close in time
@@ -290,6 +290,13 @@ sub sameWork {
     }
         
     return 0;
+}
+
+sub sameAuthorsLoose {
+  my ($a, $b) = @_;
+  my $asame = sameAuthors($a,$b,strict=>1);
+  my $asame_loose = $asame || sameAuthors($a,$b,strict=>0);
+  return $asame_loose || sameAuthorBits($a,$b);
 }
 
 sub sameAuthorBits {
