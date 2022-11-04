@@ -21,7 +21,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.53';
+our $VERSION = '0.54';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -98,16 +98,17 @@ sub firstAuthor {
 
 sub sameWork {
 
-    my $debug = 0;
-
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
+
+    my $debug = $opts{debug} || 0;
+
     $loose = 0 unless defined $loose;
     $threshold = 0.15 unless $threshold;
     $opts{loose} = 1 if $loose;
-
+  
     if ($debug) {
-        warn "sameEntry 1: " . toString($e);
-        warn "sameEntry 2: " . toString($c);
+        warn "sameWork 1: " . toString($e);
+        warn "sameWork 2: " . toString($c);
     }
 
     if (defined $e->{doi} and length $e->{doi} and defined $c->{doi} and length $c->{doi}) {
@@ -303,22 +304,22 @@ sub sameAuthorBits {
     my ($a, $b) = @_;
     my (@alist, @blist);
     for (@$a) { 
-        my $v = $_; # we copy so we don't modify the original
-        $v =~ s/,//;
-        $v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
+        my $v = lc $_; # we copy so we don't modify the original
+        $v =~ s/[,\.]//g;
+        #$v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
         push @alist, split(/\s+/, $v); 
     }
     for (@$b) { 
-        my $v = $_;
-        $v =~ s/,//;
-        $v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
+        my $v = lc $_;
+        $v =~ s/[,\.]//g;
+        #$v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
         push @blist, split(/\s+/, $v); 
     }
-#    use Data::Dumper;
+    #use Data::Dumper;
     @alist = sort @alist;
     @blist = sort @blist;
-#    print Dumper(\@alist);
-#    print Dumper(\@blist);
+    #print Dumper(\@alist);
+    #print Dumper(\@blist);
     return 0 if $#alist != $#blist;
     for (my $i=0; $i<= $#alist; $i++) {
         return 0 if lc $alist[$i] ne lc $blist[$i];
