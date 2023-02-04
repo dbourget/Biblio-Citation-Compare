@@ -21,7 +21,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.54';
+our $VERSION = '0.55';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
@@ -394,25 +394,16 @@ sub extractEdition {
 }
 
 sub numdiff {
-	my ($s1,$s2) = @_;
-	#print "----checking numdiff (($s1,$s2))\n";
-    my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
-    my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
-    #print "In s1:" . join(",",@n1) . "\n";
-    #print "In s2:" . join(",",@n2) . "\n";
-    return 0 if $#n1 ne $#n2;
-    for (0..$#n1) {
-        return 1 if lc $n1[$_] ne lc $n2[$_];
-    }
-    #print "Not diff\n";
-    return 0;
-=old
-    my $num1 = undef;
-    my $num2 = undef;
-	$num1 = $1 if ($s1 =~ /\W([IV1-9]{1,4})(((\W|$).{0,3}$)|(\W\s*:))/);
-    $num2 = $1 if ($s2 =~ /\W([IV1-9]{1,4})(((\W|$).{0,3}$)|(\W\s*:))/);
-    return $num1 eq $num2 ? 0 : 1;
-=cut
+  my ($s1,$s2) = @_;
+  my @n1 = ($s1 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
+  my @n2 = ($s2 =~ /\b([IXV0-9]{1,4}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelveth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th|11th|12th)\b/ig);
+  #print "In s1:" . join(",",@n1) . "\n";
+  #print "In s2:" . join(",",@n2) . "\n";
+  return 0 if $#n1 ne $#n2;
+  for (0..$#n1) {
+      return 1 if lc $n1[$_] ne lc $n2[$_];
+  }
+  return 0;
 }
 
 

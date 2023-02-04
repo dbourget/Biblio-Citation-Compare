@@ -1,0 +1,10 @@
+Biblio-Citation-Compare-0.55/META.json
+Biblio-Citation-Compare-0.55/META.yml
+Changes
+lib/Biblio/Citation/Compare.pm
+Makefile.PL
+MANIFEST			This list of files
+README
+t/01-sameWork.t
+t/02-editions.t
+t/sameTitle.t
