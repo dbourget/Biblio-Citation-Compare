@@ -29,3 +29,5 @@ my @sameTitleNo = (
 
 ok(sameTitle($_->[0], $_->[1]), "$_->[0] == $_->[1]") for @sameTitleYes;
 ok(!sameTitle($_->[0], $_->[1]), "$_->[0] != $_->[1]") for @sameTitleNo;
+
+done_testing();
