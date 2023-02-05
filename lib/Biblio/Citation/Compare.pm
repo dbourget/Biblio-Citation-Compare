@@ -21,7 +21,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
 
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 
 # to correct bogus windows entities. unfixable ones are converted to spaces.
 my %WIN2UTF = (
