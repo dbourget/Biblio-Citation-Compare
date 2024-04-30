@@ -359,6 +359,9 @@ sub _strip_non_word {
     $str =~ s/\s+/ /g;
     $str =~ s/^\s+//;
     $str =~ s/\s+$//;
+
+    # remove "the" beginning
+    $str =~ s/^\s*the\b//gi;
     $str; 
 }
 
