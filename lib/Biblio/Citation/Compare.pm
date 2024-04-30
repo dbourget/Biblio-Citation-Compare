@@ -224,8 +224,8 @@ sub sameWork {
 
 	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
-	my $str1 = lc _strip_non_word($e->{title});
-	my $str2 = lc _strip_non_word($c->{title});
+    my $str1 = lc _strip_non_word($e->{title});
+    my $str2 = lc _strip_non_word($c->{title});
 
     # check for edition strings
     my $ed1 = extractEdition($str1);
@@ -248,8 +248,8 @@ sub sameWork {
     warn "the text comparison is: '$str1' vs '$str2'" if $debug;
 
     warn "pre number check" if $debug;
-	# if titles differ by a number, not the same
-	return 0 if numdiff($str1,$str2);
+  	# if titles differ by a number, not the same
+  	return 0 if numdiff($str1,$str2);
 
     # ultimate test
     #dbg("$str1\n$str2\n");
@@ -258,18 +258,18 @@ sub sameWork {
     
     warn "score: $score (threshold: $threshold)" if $debug;
     #print $score . "<br>\n";
- 	return 1 if ( $score < $threshold);
+ 	  return 1 if ( $score < $threshold);
 
 	# now if loose mode and only one of the titles has a ":" or other punctuation, compare the part before the punc with the other title instead
     if ($loose) {
 
-        warn "loose: $str1 -- $str2" if $debug;
+        warn "trying loose match: $str1 -- $str2" if $debug;
 
         if ($e->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
-            my $str1 = _strip_non_word($1);
+            $str1 = _strip_non_word($1);
             if ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
-                return 0;
+              # still try below
             } else {
                 if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
                     return 1;
@@ -278,16 +278,23 @@ sub sameWork {
 
         } elsif ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
-            my $str2 = _strip_non_word($1);
+            $str2 = _strip_non_word($1);
             if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
                 return 1;
             }
 
-        } else {
-
-            return 0;
-
         }
+
+        # try something else: one is a substring of the other before :
+        $str1 = _strip_non_word($e->{title}, 1);
+        $str2 = _strip_non_word($c->{title}, 1);
+        warn "Substring match: $str1 -- $str2" if $debug;
+        if ($str1 =~ /^\Q$str2\E\s*:/i) {
+            return 1;
+        } elsif ($str2 =~ /^\Q$str1\E\s*:/i) {
+            return 1;
+        }
+
     }
         
     return 0;
@@ -341,12 +348,14 @@ sub sameAuthorBits {
 
 sub _strip_non_word {
     my $str = shift;
+    my $keep_punc = shift;
     #abbreviation "volume" v
     $str =~ s/\bvolume\b/v/gi;
     $str =~ s/\bvol\.?\b/v/gi;
     $str =~ s/\bv\.\b/v/gi;
 
-  $str =~ s/[^[0-9a-zA-Z\)\]\(\[]+/ /g;
+    my $punc = $keep_punc ? ':\?' : ''; 
+    $str =~ s/[^[0-9a-zA-Z\)\]\(\[$punc]+/ /g;
     $str =~ s/\s+/ /g;
     $str =~ s/^\s+//;
     $str =~ s/\s+$//;

@@ -52,6 +52,10 @@ $e1->{title} = "Theories of consciousness:part I";
 $e2->{title} = "Theories of consciousness:part 2";
 same($e1,$e2,0);
 
+$e1->{title} = "A multiple: part title: with bad end";
+$e2->{title} = "A multiple: part title";
+same($e1,$e2,1);
+
 $e1->{title} = "A book with a bracket (yes? !)";
 $e2->{title} = "A book with a bracket";
 same($e1,$e2,1);
@@ -139,6 +143,7 @@ check(
     ['Dummett, Michael'],
     1991,
     'Frege: Philosophy of Mathematics',
+    0,
     0
 );
 
@@ -303,17 +308,18 @@ ok(
 
 
 sub same {
-    my ($e1,$e2,$same) = @_;
-    is(sameWork($e1,$e2),$same, toString($e1) . ' ' . ($same ? ' == ' : ' != ') . ' ' . toString($e2));
+    my ($e1,$e2,$same, $loose) = @_;
+    $loose = 1 unless defined $loose;
+    is(sameWork($e1,$e2,undef, $loose, undef, debug=>1 ),$same, toString($e1) . ' ' . ($same ? ' == ' : ' != ') . ' ' . toString($e2));
 }
 
 sub check {
-    my ($authors1, $date1, $title1, $authors2, $date2, $title2, $yes) = @_;
+    my ($authors1, $date1, $title1, $authors2, $date2, $title2, $yes, $loose) = @_;
     my $e1 = {title=>$title1,date=>$date1};
     $e1->{authors} = $authors1;
     my $e2 = {title=>$title2,date=>$date2};
     $e2->{authors} = $authors2;
-    return same($e1,$e2,$yes);
+    return same($e1,$e2,$yes, $loose);
 }
 
 done_testing();
