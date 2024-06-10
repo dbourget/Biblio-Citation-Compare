@@ -96,6 +96,14 @@ sub firstAuthor {
     }
 }
 
+my %book_format = (
+  'book' => 1,
+  'thesis' => 1,
+  'chapter' => 0,
+  'journal' => 0,
+  'online collection' => 0
+);
+
 sub sameWork {
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
@@ -124,6 +132,15 @@ sub sameWork {
             return 0 unless $opts{conflate_versions};
         }
     }
+
+    if ($e->{pub_type} eq 'book' or $c->{pub_type} eq 'book') {
+    }
+    # if one is a review and the other a book, they are not the same
+    return 0 if ($e->{pub_type} eq 'book' and ($c->{review} || $c->{title} =~ /review of/i)) || ($c->{pub_type} eq 'book' and ($e->{review} || $e->{title} =~ /review of/i));
+    # also if incompatible formats
+    my $e_book = $book_format{$e->{pub_type}};
+    my $c_book = $book_format{$c->{pub_type}};
+    return 0 if defined($e_book) and defined ($c_book) and ($e_book xor $c_book);
 
     # normalize encoding of relevant fields
     local $e->{title} = decodeHTMLEntities($e->{title});
