@@ -100,6 +100,8 @@ sub sameWork {
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
 
+  	return 0 if (!$c);
+
     my $debug = $opts{debug} || 0;
 
     $loose = 0 unless defined $loose;
@@ -119,11 +121,9 @@ sub sameWork {
             $loose = 1;
             $opts{loose} = 1;
         } else {
-            return 0;
+            return 0 unless $opts{conflate_versions};
         }
     }
-
-  	return 0 if (!$c);
 
     # normalize encoding of relevant fields
     local $e->{title} = decodeHTMLEntities($e->{title});
@@ -146,9 +146,9 @@ sub sameWork {
 
     return 1 if ($tsame and $asame and $dsame);
 
-	# if authors quite different, not same
+	  # if authors quite different, not same
     if (!$asame_bits) {
-        warn "authors too different" if $debug;
+      warn "authors too different" if $debug;
      	return 0;
     }
     # at this point the authors are plausibly the same
@@ -173,7 +173,7 @@ sub sameWork {
             # but they might be reprints of the same thing, which we want to conflate. 
             if ($date_diff > 3 or $date_diff < -3) {
                 if ($asame_bits) {
-                    $threshold /= 2;
+                    $threshold /= 2 unless $opts{conflate_versions};
                     warn "dates different, lowering similarity threshold" if $debug;
                 } else {
                     warn "dates+authors too different" if $debug;
@@ -182,20 +182,17 @@ sub sameWork {
 
             } else {
                 # nearby date
-                $threshold /= 2;
+                $threshold /= 2 unless $opts{conflate_versions};
             }
 
         } else {
-            #messed up dates, assume the worst
+            #non-numeric dates
             $threshold /=2;
         }
 
     } else {
       $loose = 1 if $asame_loose or $asame_bits;
     }
-    
-
-
 
     warn "pre title length" if $debug;
   	# if title very different in lengths and do not contain ":" or brackets, not the same
@@ -207,20 +204,7 @@ sub sameWork {
 					($e->{title} !~ /$PARENS/ and $c->{title} !~ /$PARENS/)
 				); 	
 
-	# Compare links
-#    if (!$nolinks) {
-#        foreach my $l (@{$e->{links}}) {
-#            print "Links e:\n" . join("\n",$e->getLinks);
-#            print "Links c:\n" . join("\n",$c->getLinks);
-#            return 1 if grep { $l eq $_} @{$c->{links}};
-#        }
-#    }
-
     warn "pre loose mode: loose = $loose" if $debug;
-
-    #print "threshold $lname1,$lname2: $threshold\n";
-	# ok if distance short enough without doing anything
-	#print "distance: " . distance(lc $e->{title},lc $c->{title}) / (length($e->{title}) +1) . "\n";
 
   	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
@@ -234,8 +218,11 @@ sub sameWork {
     warn "ed2: $ed2" if $debug;
     $loose =1 if $ed1 and $ed2 and $ed1 == $ed2 and !$dsame and $asame_loose;
 
-    # TODO: we don't want to return 0 anymore here
-    unless ($opts{conflate_versions}) {
+    if ($opts{conflate_versions}) {
+        # remove edition descriptions from titles
+        $str1 =~ s/(\d+)(?:st|nd|rd|th) ed(?:ition)?\.?//i;
+        $str2 =~ s/(\d+)(?:st|nd|rd|th) ed(?:ition)?\.?//i;
+    } else {
         warn "not diff editions" if $debug;
         return 0 if ($ed1 and !$ed2) or ($ed2 and !$ed1) or ($ed1 && $ed1 != $ed2);
     }
@@ -257,10 +244,9 @@ sub sameWork {
         return 0 if numdiff($str1,$str2);
     }
 
-   
     return 1 if fuzzyCompare($str1,$str2,$threshold,$debug);
  
-	# now if loose mode and only one of the titles has a ":" or other punctuation, compare the part before the punc with the other title instead
+	  # now if loose mode and only one of the titles has a ":" or other punctuation, compare the part before the punc with the other title instead
     if ($loose) {
 
         warn "trying loose match: $str1 -- $str2" if $debug;
