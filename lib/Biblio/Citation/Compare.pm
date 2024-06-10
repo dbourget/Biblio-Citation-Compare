@@ -103,7 +103,7 @@ sub sameWork {
     my $debug = $opts{debug} || 0;
 
     $loose = 0 unless defined $loose;
-    $threshold = 0.15 unless $threshold;
+    $threshold = 0.07 unless $threshold;
     $opts{loose} = 1 if $loose;
   
     if ($debug) {
@@ -114,8 +114,8 @@ sub sameWork {
     if (defined $e->{doi} and length $e->{doi} and defined $c->{doi} and length $c->{doi}) {
         if ($e->{doi} eq $c->{doi}) {
             # we don't use doi to say 1 because often we have dois that are for a whole issue
-            # however same doi lowers the threshold
-            $threshold /= 2 if $e->{doi} eq $c->{doi};
+            # however same doi increases the threshold
+            $threshold *= 2 if $e->{doi} eq $c->{doi};
             $loose = 1;
             $opts{loose} = 1;
         } else {
@@ -191,7 +191,7 @@ sub sameWork {
         }
 
     } else {
-        $loose = 1 if $asame_loose or $asame_bits;
+      $loose = 1 if $asame_loose or $asame_bits;
     }
     
 
@@ -256,10 +256,8 @@ sub sameWork {
     #dbg(my_dist_text($str1,$str2));
     my $score = (my_dist_text($str1,$str2) / (length($str1) +1));
     
-    warn "score: $score (threshold: $threshold)" if $debug;
-    #print $score . "<br>\n";
- 	  return 1 if ( $score < $threshold);
-
+    return 1 if fuzzyCompare($str1,$str2,$threshold, $debug);
+ 
 	# now if loose mode and only one of the titles has a ":" or other punctuation, compare the part before the punc with the other title instead
     if ($loose) {
 
@@ -271,17 +269,13 @@ sub sameWork {
             if ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
               # still try below
             } else {
-                if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
-                    return 1;
-                }
+                return 1 if fuzzyCompare($str1,$str2,$threshold);
             }
 
         } elsif ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
             $str2 = _strip_non_word($1);
-            if (my_dist_text($str1,$str2) / (length($str1) +1)< $threshold) {
-                return 1;
-            }
+            return 1 if fuzzyCompare($str1,$str2,$threshold);
 
         }
 
@@ -298,6 +292,15 @@ sub sameWork {
     }
         
     return 0;
+}
+
+sub fuzzyCompare {
+  my ($str1, $str2, $threshold, $debug) = @_;
+  my $dist = distance($str1,$str2);
+  my $denum = (length($str1)+length($str2) +1);
+  my $dist_score = $dist / $denum;
+  warn "fuzzyCompare: $dist_score (threshold: $threshold)" if $debug;
+  return $dist_score < $threshold;
 }
 
 sub sameAuthorsLoose {
