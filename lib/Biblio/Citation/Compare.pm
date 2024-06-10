@@ -123,7 +123,7 @@ sub sameWork {
         }
     }
 
-	return 0 if (!$c);
+  	return 0 if (!$c);
 
     # normalize encoding of relevant fields
     local $e->{title} = decodeHTMLEntities($e->{title});
@@ -198,8 +198,8 @@ sub sameWork {
 
 
     warn "pre title length" if $debug;
-	# if title very different in lengths and do not contain ":" or brackets, not the same
-	return 0 if !$tsame and (
+  	# if title very different in lengths and do not contain ":" or brackets, not the same
+  	return 0 if !$tsame and (
                     abs(length($e->{title}) - length($c->{title})) > 20 
                     and
 					($e->{title} !~ /$TITLE_SPLIT/ and $c->{title} !~ /$TITLE_SPLIT/)
@@ -222,7 +222,7 @@ sub sameWork {
 	# ok if distance short enough without doing anything
 	#print "distance: " . distance(lc $e->{title},lc $c->{title}) / (length($e->{title}) +1) . "\n";
 
-	# perform fuzzy matching
+  	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
     my $str1 = lc _strip_non_word($e->{title});
     my $str2 = lc _strip_non_word($c->{title});
@@ -234,8 +234,11 @@ sub sameWork {
     warn "ed2: $ed2" if $debug;
     $loose =1 if $ed1 and $ed2 and $ed1 == $ed2 and !$dsame and $asame_loose;
 
-    return 0 if ($ed1 and !$ed2) or ($ed2 and !$ed1) or ($ed1 && $ed1 != $ed2);
-    warn "not diff editions" if $debug;
+    # TODO: we don't want to return 0 anymore here
+    unless ($opts{conflate_versions}) {
+        warn "not diff editions" if $debug;
+        return 0 if ($ed1 and !$ed2) or ($ed2 and !$ed1) or ($ed1 && $ed1 != $ed2);
+    }
 
     # remove brackets 
     my ($parens1,$parens2);
@@ -243,20 +246,19 @@ sub sameWork {
     $parens1 = $1;
     $str2 =~ s/$PARENS//g;
     $parens2 = $1;
-    return 0 if $parens1 && $parens2 && numdiff($parens1,$parens2);
+    unless ($opts{conflate_versions}) {
+      return 0 if $parens1 && $parens2 && numdiff($parens1,$parens2);
+    }
 
     warn "the text comparison is: '$str1' vs '$str2'" if $debug;
 
-    warn "pre number check" if $debug;
-  	# if titles differ by a number, not the same
-  	return 0 if numdiff($str1,$str2);
+    unless ($opts{conflate_versions}) {
+        warn "pre number check" if $debug;
+        return 0 if numdiff($str1,$str2);
+    }
 
-    # ultimate test
-    #dbg("$str1\n$str2\n");
-    #dbg(my_dist_text($str1,$str2));
-    my $score = (my_dist_text($str1,$str2) / (length($str1) +1));
-    
-    return 1 if fuzzyCompare($str1,$str2,$threshold, $debug);
+   
+    return 1 if fuzzyCompare($str1,$str2,$threshold,$debug);
  
 	# now if loose mode and only one of the titles has a ":" or other punctuation, compare the part before the punc with the other title instead
     if ($loose) {
