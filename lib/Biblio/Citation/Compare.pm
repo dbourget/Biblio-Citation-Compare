@@ -64,7 +64,8 @@ my @ED_RES = (
     '(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)',
     '([1-9])\s?\w{2,5}\s[ée]d',
     '\bv\.?(?:ersion)?\s?([0-9IXV]+)',
-    '\s([IXV0-9]+)(?:$|:)'
+    '\s([IXV0-9]+)(?:$|:)',
+    '\b(r(?:ev(?:ised)?)?|exp(?:anded)?)(?:\.|\s)\s*ed(?:\.|ition)?\b' # revised ed, expanded ed
 );
 
 #die "no" unless "2nd edition" =~ /$EDITION/i;
@@ -373,19 +374,21 @@ sub _strip_non_word {
     $str; 
 }
 
-my %nums = (
-    first => 1,
-    second => 2,
-    third => 3,
-    fourth => 4,
-    fifth => 5,
-    sixth => 6,
-    seventh => 7,
-    eighth => 8,
-    ninth => 9,
-    tenth => 10,
+my %edition_res = (
+    'first' => 1,
+    'second' => 2,
+    'third' => 3,
+    'fourth' => 4,
+    'fifth' => 5,
+    'sixth' => 6,
+    'seventh' => 7,
+    'eighth' => 8,
+    'ninth' => 9,
+    'tenth' => 10,
+    'r(:?ev(?:ised)?)?' => 'revised',
+    'exp(?:anded)?' => 'expanded'
 );
-sub extract_num {
+sub convert_edition {
     my $s = shift;
     if ($s =~ /\b(\d+)/) {
         return $1;
@@ -394,9 +397,9 @@ sub extract_num {
         return roman2int($s);
     }
 
-    for my $n (keys %nums) {
-        if ($s =~ /\b$n\b/i) {
-            return $nums{$n};
+    for my $key (keys %edition_res) {
+        if ($s =~ /\b$key\b/i) {
+            return $edition_res{$key};
         }
 
     }
@@ -407,7 +410,7 @@ sub extractEdition {
     my $s = shift;
     for my $re (@ED_RES) {
         if ($s =~ /$re/i) {
-            return extract_num($1);
+            return convert_edition($1) || $1;
         }
     }
     return undef;
