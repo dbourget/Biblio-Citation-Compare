@@ -7,6 +7,7 @@ use Text::LevenshteinXS qw(distance);
 use HTML::Entities;
 use Text::Names qw/samePerson cleanName parseName parseName2/;
 use Text::Roman qw/isroman roman2int/;
+use List::Util qw(min max);
 use utf8;
 
 require Exporter;
@@ -108,8 +109,7 @@ my %book_format = (
 sub sameWork {
 
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
-
-  	return 0 if (!$c);
+  	return 0 if (!$c || !$e);
 
     my $debug = $opts{debug} || 0;
 
@@ -223,6 +223,27 @@ sub sameWork {
 				); 	
 
     warn "pre loose mode: loose = $loose" if $debug;
+
+    # rule out identity when articles are published in the same journal but with different titles
+    # and in different pages. 
+    if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal") {
+        if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
+            if (!$tsame) {
+                if ($e->{pages} && $c->{pages}) {
+                    if ($e->{pages} ne $c->{pages}) {
+                        my ($e_first, $e_last) = split(/-/, $e->{pages});
+                        my ($c_first, $c_last) = split(/-/, $c->{pages});
+                        if ($e_last && $c_last) {
+                            my $page_overlap = max(0, (min($e_last, $c_last) + 1) - max($e_first, $c_first));
+                            return 0 if $page_overlap < 3;
+                        } else { 
+                            return 0 if abs($e_first - $c_first) > 3;
+                        }
+                    }
+                }
+            }
+        }
+    } 
 
   	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
