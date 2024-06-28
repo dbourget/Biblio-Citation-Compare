@@ -230,9 +230,11 @@ sub sameWork {
         if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
             if (!$tsame) {
                 if ($e->{pages} && $c->{pages}) {
-                    if ($e->{pages} ne $c->{pages}) {
-                        my ($e_first, $e_last) = split(/-/, $e->{pages});
-                        my ($c_first, $c_last) = split(/-/, $c->{pages});
+                    my $e_pages = decodeHTMLEntities($e->{pages});
+                    my $c_pages = decodeHTMLEntities($c->{pages});
+                    if ($e_pages ne $c_pages) {
+                        my ($e_first, $e_last) = split(/[-–]/, $e_pages);
+                        my ($c_first, $c_last) = split(/[-–]/, $c_pages);
                         if ($e_last && $c_last) {
                             my $page_overlap = max(0, (min($e_last, $c_last) + 1) - max($e_first, $c_first));
                             return 0 if $page_overlap < 3;
