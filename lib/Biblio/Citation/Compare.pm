@@ -190,7 +190,7 @@ sub sameWork {
             # but they might be reprints of the same thing, which we want to conflate. 
             if ($date_diff > 3 or $date_diff < -3) {
                 if ($asame_bits) {
-                    $threshold /= 2 unless $opts{conflate_versions};
+                  #$threshold /= 2 unless $opts{conflate_versions};
                     warn "dates different, lowering similarity threshold" if $debug;
                 } else {
                     warn "dates+authors too different" if $debug;
@@ -199,7 +199,7 @@ sub sameWork {
 
             } else {
                 # nearby date
-                $threshold /= 2 unless $opts{conflate_versions};
+                #$threshold *= 2 unless $opts{conflate_versions};
             }
 
         } else {
