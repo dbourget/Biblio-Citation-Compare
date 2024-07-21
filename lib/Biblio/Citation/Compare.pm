@@ -107,8 +107,9 @@ my %book_format = (
 );
 
 sub sameWork {
-
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
+    return 1 if defined $e->id && $e->id ne "" and $e->{id} eq $c->{id};
+    
   	return 0 if (!$c || !$e);
 
     my $debug = $opts{debug} || 0;
