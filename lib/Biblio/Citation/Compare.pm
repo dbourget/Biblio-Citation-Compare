@@ -313,10 +313,13 @@ sub sameWork {
         $str1 = _strip_non_word($e->{title}, 1);
         $str2 = _strip_non_word($c->{title}, 1);
         warn "Substring match: $str1 -- $str2" if $debug;
-        if ($str1 =~ /^\Q$str2\E\s*:/i) {
-            return 1;
-        } elsif ($str2 =~ /^\Q$str1\E\s*:/i) {
-            return 1;
+        if ($str1 =~ /^([^$TITLE_SPLIT]+)$TITLE_SPLIT/) {
+        # if ($str1 =~ /^(.+)$TITLE_SPLIT/) {
+            $str1 = $1 =~ s/^\s+|\s+$//gr;
+            return 1 if $str2 =~ /^\Q$str1\E/
+        } elsif ($str2 =~ /^([^$TITLE_SPLIT]+)$TITLE_SPLIT/) {
+            $str2 = $1 =~ s/^\s+|\s+$//gr;
+            return 1 if $str1 =~ /^\Q$str2\E/
         }
 
     }
@@ -326,6 +329,7 @@ sub sameWork {
 
 sub fuzzyCompare {
   my ($str1, $str2, $threshold, $debug) = @_;
+  print "fuzzyCompare:\n$str1\n$str2\n";
   my $dist = distance($str1,$str2);
   my $denum = (length($str1)+length($str2) +1);
   my $dist_score = $dist / $denum;
@@ -387,7 +391,7 @@ sub _strip_non_word {
     $str =~ s/\bvol\.?\b/v/gi;
     $str =~ s/\bv\.\b/v/gi;
 
-    my $punc = $keep_punc ? ':\?' : ''; 
+    my $punc = $keep_punc ? $TITLE_SPLIT : ''; 
     $str =~ s/[^[0-9a-zA-Z\)\]\(\[$punc]+/ /g;
     $str =~ s/\s+/ /g;
     $str =~ s/^\s+//;
