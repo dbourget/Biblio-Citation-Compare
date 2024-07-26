@@ -329,7 +329,6 @@ sub sameWork {
 
 sub fuzzyCompare {
   my ($str1, $str2, $threshold, $debug) = @_;
-  print "fuzzyCompare:\n$str1\n$str2\n";
   my $dist = distance($str1,$str2);
   my $denum = (length($str1)+length($str2) +1);
   my $dist_score = $dist / $denum;
