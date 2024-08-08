@@ -7,7 +7,7 @@ use Text::LevenshteinXS qw(distance);
 use HTML::Entities;
 use Text::Names qw/samePerson cleanName parseName parseName2/;
 use Text::Roman qw/isroman roman2int/;
-use List::Util qw(min max);
+use List::Util qw(min max all);
 use utf8;
 
 require Exporter;
@@ -15,7 +15,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	sameWork sameAuthors toString extractEdition sameAuthorBits sameTitle sameAuthorsLoose
+	sameWork sameAuthors toString extractEdition extractVolume sameAuthorBits sameAuthorsLoose sameTitle samePages 
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -98,6 +98,81 @@ sub firstAuthor {
     }
 }
 
+# matches valid roman numerals
+my $r = qr/(
+    M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}) |
+    m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})
+)/x;
+
+my %page_rules = (
+    arabic => qr/(\d+)/,
+    roman => $r
+);
+
+my @page_regexes = map { 
+    my $k = $_;
+  qr/^\s*
+    (?<prefix>[a-z])?                # optional page prefix
+    (?<${k}First>$page_rules{$_}) # first page number
+    (?:
+        [\s\-–]+(?:<prefix>)         # separator and optional prefix
+        (?<last>$page_rules{$_})   # last page number
+    )?
+  \s*$/ix 
+} keys %page_rules;
+
+sub normalizeLastPage {
+    my ($first, $last) = @_;
+    return $last if $last >= $first; # already normal
+    return $last if length($last) >= length($first); # already normal
+    my $overlap = substr($first, -length($last));
+    return $last if $overlap >= $last; # cannot fix
+    return substr($first, 0, length($first) - length($last)) . $last;
+}
+
+sub samePages {
+    my ($pp1, $pp2, %opts) = @_;
+    my $tolerance = $opts{tolerance}|| 1;
+    decodeHTMLEntities($_) for ($pp1, $pp2);
+    return 0 if $opts{strict} && !($pp1 && $pp2);
+    return 1 if $pp1 eq $pp2;
+    
+    for my $pp ($pp1, $pp2) {
+        for my $r (@page_regexes) {
+            $pp = {%+} and next if $pp =~ /$r/;
+        }
+    }
+
+    # return if any failed to match.
+    return 0 unless all {ref $_ eq "HASH"} ($pp1, $pp2);
+
+    if ($opts{strict}) {
+        # require same type of page numbers
+        ($pp1->{$_} xor $pp2->{$_}) and return 0 for map { $_ . "First" } keys %page_rules;
+    }
+
+    if ($opts{prefixes_must_match}) {
+        return 0 if ($pp1->{prefix} || $pp2->{prefix}) && $pp1->{prefix} ne $pp2->{prefix};
+    }
+
+    for my $pp ($pp1, $pp2) {
+        $pp->{last} = normalizeLastPage($pp->{arabicFirst}, $pp->{last}) if $pp->{arabicFirst} && $pp->{last};
+        if ($pp->{romanFirst}) {
+            $pp->{$_} = roman2int($pp->{$_}) for ('romanFirst', 'last');
+        }
+        # push all first pages to 'first'
+        $pp->{first} = eval join "||", map { $pp->{$_ . "First"} } keys %page_rules;
+    }
+
+    return 0 if ($pp1->{last} xor $pp2->{last}) && !$opts{match_first_sufficient};
+
+    if ($pp1->{last} && $pp2->{last}) {
+        return abs($pp1->{first} - $pp2->{first}) <= $tolerance && abs($pp1->{last} - $pp2->{last}) <= $tolerance;
+    } else {
+        return abs($pp1->{first} - $pp2->{first}) <= $tolerance;
+    }
+}
+
 my %book_format = (
   'book' => 1,
   'thesis' => 1,
@@ -108,7 +183,7 @@ my %book_format = (
 
 sub sameWork {
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
-        return 1 if defined $e->{id} && $e->{id} ne "" and $e->{id} eq $c->{id};
+    return 1 if defined $e->{id} && $e->{id} ne "" and $e->{id} eq $c->{id};
     
   	return 0 if (!$c || !$e);
 
@@ -134,11 +209,9 @@ sub sameWork {
             return 0 unless $opts{conflate_versions};
         }
     }
-
-    if ($e->{pub_type} eq 'book' or $c->{pub_type} eq 'book') {
-    }
     # if one is a review and the other a book, they are not the same
     return 0 if ($e->{pub_type} eq 'book' and ($c->{review} || $c->{title} =~ /review of/i)) || ($c->{pub_type} eq 'book' and ($e->{review} || $e->{title} =~ /review of/i));
+    
     # also if incompatible formats
     my $e_book = $book_format{$e->{pub_type}};
     my $c_book = $book_format{$c->{pub_type}};
@@ -153,7 +226,7 @@ sub sameWork {
     my $asame = sameAuthors($e->{authors},$c->{authors},strict=>1);
     my $asame_loose = $asame || sameAuthors($e->{authors},$c->{authors},strict=>0); #asame_loose will be 1 while same is 0 when there are extra authors in one paper but all overlap authors match
     my $asame_bits = $asame_loose || sameAuthorBits($e->{authors},$c->{authors});
-    my $dsame = (defined $e->{date} and defined $c->{date} and $e->{date} eq $c->{date}) ? 1 : 0;
+    my $dsame = sameDate($e->{date},$c->{date}, strict => 1);
 
     if ($debug) {
         warn "tsame: $tsame";
@@ -165,12 +238,19 @@ sub sameWork {
 
     return 1 if ($tsame and $asame and $dsame);
 
-	  # if authors quite different, not same
+	# if authors quite different, not same
     if (!$asame_bits) {
       warn "authors too different" if $debug;
      	return 0;
     }
     # at this point the authors are plausibly the same
+
+    no warnings 'uninitialized';
+    if ($e->{pub_type} eq "book" && $c->{pub_type} eq "book" && $e->calcVolume != $c->calcVolume) {
+        warn "Different volumes" if $debug;
+        return 0
+    } 
+    use warnings 'uninitialized';
 
     # check dates
     my $date_wildcards = '^forthcoming|in press|manuscript|unknown|web$';
@@ -184,21 +264,17 @@ sub sameWork {
         }
 
         # numeric dates
-        if ($e->{date} and $e->{date} =~ /^\d\d\d\d$/ and $c->{date} and $c->{date} =~ /^\d\d\d\d$/) {
+        local ($e->{date}) = $e->{date} =~ /(\d{4})/;
+        local ($c->{date}) = $c->{date} =~ /(\d{4})/;
+        if ($e->{date} and $e->{date}) {
             my $date_diff = $e->{date} - $c->{date};            
             # quite often people misremember dates so we permit some slack
             # we will consider the dates compat if they close in time
             # if dates are far apart, we know they are not exactly the same publicatoins. 
             # but they might be reprints of the same thing, which we want to conflate. 
             if ($date_diff > 3 or $date_diff < -3) {
-                if ($asame_bits) {
-                  #$threshold /= 2 unless $opts{conflate_versions};
-                    warn "dates different, lowering similarity threshold" if $debug;
-                } else {
-                    warn "dates+authors too different" if $debug;
-                    return 0;
-                }
-
+                #$threshold /= 2 unless $opts{conflate_versions};
+                warn "dates different, lowering similarity threshold" if $debug;
             } else {
                 # nearby date
                 #$threshold *= 2 unless $opts{conflate_versions};
@@ -229,24 +305,22 @@ sub sameWork {
     # and in different pages. 
     if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal") {
         if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
-            if (!$tsame) {
-                if ($e->{pages} && $c->{pages}) {
-                    my $e_pages = decodeHTMLEntities($e->{pages});
-                    my $c_pages = decodeHTMLEntities($c->{pages});
-                    if ($e_pages ne $c_pages) {
-                        my ($e_first, $e_last) = split(/[-–]/, $e_pages);
-                        my ($c_first, $c_last) = split(/[-–]/, $c_pages);
-                        if ($e_last && $c_last) {
-                            my $page_overlap = max(0, (min($e_last, $c_last) + 1) - max($e_first, $c_first));
-                            return 0 if $page_overlap < 3;
-                        } else { 
-                            return 0 if abs($e_first - $c_first) > 3;
-                        }
-                    }
-                }
+            if (!$tsame && !samePages($e->{pages}, $c->{pages}, strict => 0)) {
+                return 0;
             }
         }
     } 
+    # rule out identity when chapters are published in the same work but with different titles and in different pages.
+    if ($e->{pub_type} eq "chapter" && $c->{pub_type} eq "chapter") {
+        if ( 
+            ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
+            ($e->book && $c->book && $e->book eq $c->book)
+        ) {
+            if (!$tsame || !samePages($e->{pages}, $c->{pages}, strict => 0)) {
+                return 0;
+            }
+        }
+    }
 
   	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
@@ -401,6 +475,12 @@ sub _strip_non_word {
     $str; 
 }
 
+sub convert_number_string {
+    my $s = shift;
+    return $1 if $s =~ /(\d+)/;
+    return roman2int($s) if isroman($s);
+}
+
 my %edition_res = (
     'first' => 1,
     'second' => 2,
@@ -415,20 +495,15 @@ my %edition_res = (
     'r(:?ev(?:ised)?)?' => 'revised',
     'exp(?:anded)?' => 'expanded'
 );
-sub convert_edition {
-    my $s = shift;
-    if ($s =~ /\b(\d+)/) {
-        return $1;
-    }
-    if (isroman($s)) {
-        return roman2int($s);
-    }
 
+sub convert_edition {
+    my $r = convert_number_string(@_);
+    return $r if $r;
+    my $s = shift;
     for my $key (keys %edition_res) {
         if ($s =~ /\b$key\b/i) {
             return $edition_res{$key};
         }
-
     }
     return $s;
 }
@@ -439,6 +514,38 @@ sub extractEdition {
         if ($s =~ /$re/i) {
             return convert_edition($1) || $1;
         }
+    }
+    return undef;
+}
+
+my %volume_res = (
+    'one' => 1,
+    'two' => 2,
+    'three' => 3,
+    'four' => 4,
+    'five' => 5,
+    'six' => 6,
+    'seven' => 7,
+    'eight' => 8,
+    'nine' => 9,
+    'ten' => 10
+);
+
+sub convert_volume {
+    my $r = convert_number_string(@_);
+    return $r if $r;
+    my $s = shift;
+    for my $key (keys %volume_res) {
+        if ($s =~ /\b$key\b/i) {
+            return $volume_res{$key};
+        }
+    }    
+}
+
+sub extractVolume {
+    my $s = shift;
+    if ($s =~ /\bv(?:.|ol.?(?:ume)?)?\s*([0-9]+|[CXVI]+|(?:one|two|three|four|five|six|seven|eight|nine|ten))\b/i) {
+        return convert_volume($1) || $1;
     }
     return undef;
 }
@@ -492,6 +599,18 @@ sub toString {
 sub sameTitle {
   my ($a, $b, $threshold,$loose,$nolinks,%opts) = @_;
   return sameWork({ title => $a }, { title => $b }, $threshold,$loose,$nolinks,%opts);
+}
+
+sub sameDate {
+    my ($a, $b, %opts) = @_;
+    return 0 if $opts{strict} && !(defined $a && defined $b);
+    return 1 if $a eq $b;
+    # find any match when multiple years are given
+    if ($a =~ /(?:^|\D)(\d{4})(?:\D|$)/g) {
+        my $re = join("|", map { $_ } @{^CAPTURE});
+        return $b =~ /$re/;
+    }
+    return 0;
 }
 
 1;
