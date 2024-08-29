@@ -98,25 +98,48 @@ sub firstAuthor {
     }
 }
 
-# matches valid roman numerals
-my $r = qr/(
-    M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}) |
-    m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})
-)/x;
+# Using just {0,3} allows matching blanks, but we want to force
+# this to match only if a valid roman numeral is present.
+# We are assuming we have no roman numeral pages greater than or equal to 400.
+# basis can be swapped if we need higher numbers.
+# my $basis = 'm{%s,3}(cm|cd|d?c{%s,3})(xc|xl|l?x{%s,3})(ix|iv|v?i{%s,3})"
+my $basis = '(c{%s,3})(xc|xl|l?x{%s,3})(ix|iv|v?i{%s,3})';
+
+my $occurrences = () = $basis =~ /\%s/g;
+my @iterations = map { my @arr = (0) x $occurrences; $arr[abs(2-$_)] = 1; \@arr } 0..$occurrences-1;
+my $lower_case = join("|", map { sprintf $basis, @$_ } @iterations);
+
+my $roman = $lower_case;
+my $r = qr/$roman/i;
+# This would enforce matching, e.g., "iv" and "IV" but not "Iv" or "iV"
+#   my $roman = "($lower_case)|(" . uc $lower_case . ")";
+#   my $r = qr/$roman/;
 
 my %page_rules = (
-    arabic => qr/(\d+)/,
-    roman => $r
+    arabic => {
+        re => qr/(\d+)/,
+        prefix => qr/([a-z]+)/i,
+    },
+    roman => {
+        re => $r,
+        # exclude roman numerals ivxlc from prefix
+        # It's unlikely we have any 500+ page frontmatters,
+        # so not excluding m,d
+        prefix => qr/([abd-hjkm-uwyz]+)/i,
+    }
 );
 
 my @page_regexes = map { 
     my $k = $_;
+    my $v = $page_rules{$_};
+    my $re = $v->{re};
+    my $prefix = $v->{prefix};
   qr/^\s*
-    (?<prefix>[a-z])?                # optional page prefix
-    (?<${k}First>$page_rules{$_}) # first page number
+    (?<prefix>${prefix})?           # optional page prefix
+    (?<${k}First>${re})   # first page number
     (?:
-        [\s\-–]+(?:<prefix>)         # separator and optional prefix
-        (?<last>$page_rules{$_})   # last page number
+        [\s\-–]+(?:\g{prefix})?         # separator and optional prefix
+        (?<last>${re})    # last page number
     )?
   \s*$/ix 
 } keys %page_rules;
@@ -133,13 +156,15 @@ sub normalizeLastPage {
 sub samePages {
     my ($pp1, $pp2, %opts) = @_;
     my $tolerance = $opts{tolerance}|| 1;
-    decodeHTMLEntities($_) for ($pp1, $pp2);
+    $_ = decodeHTMLEntities($_) for ($pp1, $pp2);
     return 0 if $opts{strict} && !($pp1 && $pp2);
+    no warnings 'uninitialized';
     return 1 if $pp1 eq $pp2;
+    use warnings 'uninitialized';
     
-    for my $pp ($pp1, $pp2) {
+    PAGES: for my $pp ($pp1, $pp2) {
         for my $r (@page_regexes) {
-            $pp = {%+} and next if $pp =~ /$r/;
+            $pp = {%+} and next PAGES if $pp =~ /$r/;
         }
     }
 
@@ -156,12 +181,18 @@ sub samePages {
     }
 
     for my $pp ($pp1, $pp2) {
+        for my $key (keys %$pp) {
+            $pp->{$key} = lc $pp->{$key} if $key =~ /roman/i;
+        }
+
         $pp->{last} = normalizeLastPage($pp->{arabicFirst}, $pp->{last}) if $pp->{arabicFirst} && $pp->{last};
         if ($pp->{romanFirst}) {
             $pp->{$_} = roman2int($pp->{$_}) for ('romanFirst', 'last');
         }
         # push all first pages to 'first'
-        $pp->{first} = eval join "||", map { $pp->{$_ . "First"} } keys %page_rules;
+        for (keys %page_rules) {
+            $pp->{first} = $pp->{$_ . 'First'} if exists $pp->{$_ . 'First'};
+        }
     }
 
     return 0 if ($pp1->{last} xor $pp2->{last}) && !$opts{match_first_sufficient};
@@ -573,6 +604,7 @@ sub my_dist_text {
 
 }
 sub decodeHTMLEntities {
+    no warnings 'uninitialized';
     my $in = shift;
     $in =~ s/&([\d\w\#]+);/&safe_decode($1)/gei;
     return $in;
