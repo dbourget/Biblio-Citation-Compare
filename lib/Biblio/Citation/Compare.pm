@@ -134,14 +134,15 @@ my @page_regexes = map {
     my $v = $page_rules{$_};
     my $re = $v->{re};
     my $prefix = $v->{prefix};
-  qr/^\s*
-    (?<prefix>${prefix})?           # optional page prefix
-    (?<${k}First>${re})   # first page number
-    (?:
-        [\s\-–]+(?:\g{prefix})?         # separator and optional prefix
-        (?<last>${re})    # last page number
-    )?
-  \s*$/ix 
+    qr/^\s*
+        (?<prefix>${prefix})?                         
+        (?<${k}First>${re})                           
+        (?:
+            [\s\-–]+(?:\g{prefix})?(?<last>${re})   | 
+            (?:\g{prefix})(?<last>${re})            | 
+            [\s\-–]*(?:\g{prefix})?                   
+        )?
+    \s*$/ix 
 } keys %page_rules;
 
 sub normalizeLastPage {
