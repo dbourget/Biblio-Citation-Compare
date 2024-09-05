@@ -163,6 +163,8 @@ sub samePages {
     return 1 if $pp1 eq $pp2;
     use warnings 'uninitialized';
     
+    $_ =~ s/\bpp?\.?(?=\s*\d)//g; for ($pp1, $pp2); # remove "p", "pp.", etc
+
     PAGES: for my $pp ($pp1, $pp2) {
         for my $r (@page_regexes) {
             $pp = {%+} and next PAGES if $pp =~ /$r/;
