@@ -499,7 +499,7 @@ sub _strip_non_word {
     $str =~ s/\bv\.\b/v/gi;
 
     my $punc = $keep_punc ? $TITLE_SPLIT : ''; 
-    $str =~ s/[^[0-9a-zA-Z\)\]\(\[$punc]+/ /g;
+    $str =~ s/[^[0-9\p{L}\)\]\(\[$punc]+/ /g;
     $str =~ s/\s+/ /g;
     $str =~ s/^\s+//;
     $str =~ s/\s+$//;
