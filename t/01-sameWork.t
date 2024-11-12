@@ -125,7 +125,6 @@ $e1->{authors} = ['Wilson, Jessica M.'];
 $e2->{authors} = ['Wilson, J.'];
 same($e1,$e2,1);
 
-print "here\n"; 
 $e1->{title} = "Введение в теорию пустоты";
 $e2->{title} = "Введение в теорию пустоты";
 same($e1,$e2,1);
