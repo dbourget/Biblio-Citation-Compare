@@ -244,11 +244,13 @@ sub sameWork {
         }
     }
     # if one is a review and the other a book, they are not the same
+    no warnings;
     return 0 if ($e->{pub_type} eq 'book' and ($c->{review} || $c->{title} =~ /review of/i)) || ($c->{pub_type} eq 'book' and ($e->{review} || $e->{title} =~ /review of/i));
     
     # also if incompatible formats
     my $e_book = $book_format{$e->{pub_type}};
     my $c_book = $book_format{$c->{pub_type}};
+    use warnings;
     return 0 if defined($e_book) and defined ($c_book) and ($e_book xor $c_book);
 
     # normalize encoding of relevant fields
@@ -337,9 +339,11 @@ sub sameWork {
 
     # rule out identity when articles are published in the same journal but with different titles
     # and in different pages. 
+    no warnings;
     if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal") {
         if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
             if (!$tsame && !samePages($e->{pages}, $c->{pages}, strict => 0)) {
+                use warnings;
                 return 0;
             }
         }
@@ -351,10 +355,12 @@ sub sameWork {
             ($e->book && $c->book && $e->book eq $c->book)
         ) {
             if (!$tsame || !samePages($e->{pages}, $c->{pages}, strict => 0)) {
+                use warnings;
                 return 0;
             }
         }
     }
+    use warnings;
 
   	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
