@@ -264,6 +264,30 @@ sub sameWork {
     my $asame_bits = $asame_loose || sameAuthorBits($e->{authors},$c->{authors});
     my $dsame = sameDate($e->{date},$c->{date}, strict => 1);
 
+    # duplicated in sameEntry
+    # rule out identity when articles are published in the same journal but with different titles
+    # or in different pages. 
+    no warnings;
+    if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal") {
+        if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
+            if (!$tsame || !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
+                return 0;
+            }
+        }
+    } 
+    # rule out identity when chapters are published in the same work but with different titles or in different pages.
+    if ($e->{pub_type} eq "chapter" && $c->{pub_type} eq "chapter") {
+        if ( 
+            ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
+            ($e->book && $c->book && $e->book eq $c->book)
+        ) {
+            if (!$tsame || !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
+                return 0;
+            }
+        }
+    }
+    use warnings;
+
     if ($debug) {
         warn "tsame: $tsame";
         warn "asame: $asame";
@@ -337,30 +361,6 @@ sub sameWork {
 
     warn "pre loose mode: loose = $loose" if $debug;
 
-    # rule out identity when articles are published in the same journal but with different titles
-    # and in different pages. 
-    no warnings;
-    if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal") {
-        if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
-            if (!$tsame && !samePages($e->{pages}, $c->{pages}, strict => 0)) {
-                use warnings;
-                return 0;
-            }
-        }
-    } 
-    # rule out identity when chapters are published in the same work but with different titles and in different pages.
-    if ($e->{pub_type} eq "chapter" && $c->{pub_type} eq "chapter") {
-        if ( 
-            ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
-            ($e->book && $c->book && $e->book eq $c->book)
-        ) {
-            if (!$tsame || !samePages($e->{pages}, $c->{pages}, strict => 0)) {
-                use warnings;
-                return 0;
-            }
-        }
-    }
-    use warnings;
 
   	# perform fuzzy matching
    	#my $str1 = "$e->{date}|$e->{title}";
