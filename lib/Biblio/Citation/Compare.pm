@@ -159,9 +159,9 @@ sub samePages {
     my $tolerance = $opts{tolerance}|| 1;
     $_ = decodeHTMLEntities($_) for ($pp1, $pp2);
     return 0 if $opts{strict} && !($pp1 && $pp2);
+    return 0 if !$opts{match_on_blank} && !($pp1 && $pp2); 
     no warnings 'uninitialized';
     return 1 if $pp1 eq $pp2;
-    use warnings 'uninitialized';
     
     $_ =~ s/\bpp?\.?(?=\s*\d)//g for ($pp1, $pp2); # remove "p", "pp.", etc
 
@@ -174,7 +174,7 @@ sub samePages {
     # return if any failed to match.
     return 0 unless all {ref $_ eq "HASH"} ($pp1, $pp2);
 
-    if ($opts{strict}) {
+    if ($opts{match_style}) {
         # require same type of page numbers
         ($pp1->{$_} xor $pp2->{$_}) and return 0 for map { $_ . "First" } keys %page_rules;
     }
@@ -198,7 +198,7 @@ sub samePages {
         }
     }
 
-    return 0 if ($pp1->{last} xor $pp2->{last}) && !$opts{match_first_sufficient};
+    return 0 if ($pp1->{last} xor $pp2->{last}) && $opts{require_match_last};
 
     if ($pp1->{last} && $pp2->{last}) {
         return abs($pp1->{first} - $pp2->{first}) <= $tolerance && abs($pp1->{last} - $pp2->{last}) <= $tolerance;
