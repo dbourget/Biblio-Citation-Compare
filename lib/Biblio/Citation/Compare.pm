@@ -279,7 +279,7 @@ sub sameWork {
     if ($e->{pub_type} eq "chapter" && $c->{pub_type} eq "chapter") {
         if ( 
             ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
-            ($e->book && $c->book && $e->book eq $c->book)
+            ($e->{book} && $c->{book} && $e->{book} eq $c->{book})
         ) {
             if (!$tsame || !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
                 return 0;
