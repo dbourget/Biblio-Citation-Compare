@@ -93,13 +93,13 @@ my @samePagesNo = (
   ['Gilbert, André-Pierrot LAMBERT, ', 'Smith, John'],
 );
 
-my @samePagesNoStrict = (
+my @samePagesMatchStyle = (
   ["cci-ccvi", "201-206"],
   ["cci-ccvi", "202-206"],
   ["cci-ccvi", "201-207"],
 );
 
 ok(samePages($_->[0], $_->[1]), "$_->[0] == $_->[1]") for @samePagesYes;
-ok(samePages($_->[0], $_->[1], match_first_sufficient => 1), "msf: $_->[0] == $_->[1]") for @samePagesYesFirstSufficient;
+ok(samePages($_->[0], $_->[1]), "msf: $_->[0] == $_->[1]") for @samePagesYesFirstSufficient;
 ok(!samePages($_->[0], $_->[1]), "$_->[0] != $_->[1]") for @samePagesNo;
-ok(!samePages($_->[0], $_->[1], strict => 1), "strict: $_->[0] != $_->[1]") for @samePagesNoStrict;
+ok(!samePages($_->[0], $_->[1], match_style => 1), "match style: $_->[0] != $_->[1]") for @samePagesNoStrict;
