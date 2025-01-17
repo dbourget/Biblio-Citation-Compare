@@ -265,12 +265,11 @@ sub sameWork {
     my $dsame = sameDate($e->{date},$c->{date}, strict => 1);
 
     # duplicated in sameEntry
-    # rule out identity when articles are published in the same journal but with different titles
-    # or in different pages. 
+    # rule out identity when articles are published in the same journal but with different pages.
     no warnings;
     if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal") {
         if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
-            if (!$tsame || !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
+            if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
                 return 0;
             }
         }
@@ -281,7 +280,7 @@ sub sameWork {
             ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
             ($e->{book} && $c->{book} && $e->{book} eq $c->{book})
         ) {
-            if (!$tsame || !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
+            if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
                 return 0;
             }
         }
