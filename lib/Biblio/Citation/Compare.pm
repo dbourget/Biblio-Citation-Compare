@@ -217,10 +217,7 @@ my %book_format = (
 
 sub sameWork {
  	my ($e, $c, $threshold,$loose,$nolinks,%opts) = @_;
-    {
-        no warnings 'uninitialized';
-        return 1 if defined $e->{id} && $e->{id} ne "" and $e->{id} eq $c->{id};
-    }
+    return 1 if defined $e->{id} && defined $c->{id} && $e->{id} ne "" and $e->{id} eq $c->{id};
   	return 0 if (!$c || !$e);
 
     my $debug = $opts{debug} || 0;
