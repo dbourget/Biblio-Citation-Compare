@@ -76,14 +76,27 @@ my $TITLE_SPLIT = '(?:\?|\:|\.|!)';
 
 sub sameAuthors {
     my ($list1, $list2, %opts) = @_;
-    return 0 if $#$list1 != $#$list2 and $opts{strict};
-    if ($#$list2 > $#$list1) {
-        my $t = $list1;
-        $list1 = $list2;
-        $list2 = $t;
+    my $max = 10;
+    my $len1 = scalar(@$list1);
+    my $len2 = scalar(@$list2);
+
+    # Only compare up to the first 10 authors
+    my @a1 = @$list1[0 .. ($len1-1 < $max-1 ? $len1-1 : $max-1)];
+    my @a2 = @$list2[0 .. ($len2-1 < $max-1 ? $len2-1 : $max-1)];
+
+    # If both lists have more than 10 authors, skip length comparison
+    if (!($len1 > $max && $len2 > $max)) {
+        return 0 if $#a1 != $#a2 and $opts{strict};
     }
-    for (my $i = 0; $i <= $#$list2; $i++) {
-        return 0 unless grep { samePerson($list2->[$i],$_, %opts) } @$list1;
+
+    # Always compare the shorter list to the longer one
+    if ($#a2 > $#a1) {
+        my $t = \@a1;
+        @a1 = @a2;
+        @a2 = @$t;
+    }
+    for (my $i = 0; $i <= $#a2; $i++) {
+        return 0 unless grep { samePerson($a2[$i],$_, %opts) } @a1;
     }
     return 1;
 }

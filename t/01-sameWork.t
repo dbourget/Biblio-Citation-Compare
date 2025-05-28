@@ -21,6 +21,38 @@ ok(!sameAuthorBits(['A, A'],['B, B']), 'same authors bits does not overgenerates
 ok( sameAuthors($_->[0],$_->[1]), join(";",@{$_->[0]}) . " = " . join(";",@{$_->[1]})) for @samePersonYes;
 ok( !sameAuthors($_->[0],$_->[1]), join(";",@{$_->[0]}) . " != " . join(";",@{$_->[1]})) for @samePersonNo;
 
+my @longlist = ( 
+    [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
+    [ [ 'J wilson' ], ['Jessica WILSON'] ],
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ],
+    [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
+    [ [ 'J wilson' ], ['Jessica WILSON'] ],
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ],
+    [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
+    [ [ 'J wilson' ], ['Jessica WILSON'] ],
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ]
+);
+
+my @longlist2 = ( 
+    [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
+    [ [ 'J wilson' ], ['Jessica WILSON'] ],
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ],
+    [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
+    [ [ 'J wilson' ], ['Jessica WILSON'] ],
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. Bourget', 'J Wilson' ], ['J Wilson'] ],
+    [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
+    [ [ 'J wilson' ], ['Jessica WILSON'] ],
+    [ [ 'J. Wilson' ], ['Jessica M. WILSON'] ],
+    [ [ 'D. DIFFERENT', 'J DIFFERENT' ], ['DIFFERENT DIFFERENT'] ]
+);
+
+
+
 my $e1 = {};
 my $e2 = {};
 my @authors = ('Bourget, David');
@@ -28,6 +60,13 @@ $e1->{authors} = \@authors;
 $e2->{authors} = \@authors;
 $e1->{date} = 2009;
 $e2->{date} = 2009;
+$e1->{title} = "A paper with such and such a title";
+$e2->{title} = "A paper with such nd such a tlitle";
+
+same($e1,$e2,1);
+$e1->{authors} = \@longlist;
+$e2->{authors} = \@longlist2;
+same($e1,$e2,1);
 
 # Test numeric difference
 $e1->{title} = "Chapter 1 of xyz";
