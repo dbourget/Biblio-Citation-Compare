@@ -256,8 +256,8 @@ sub sameWork {
         }
     }
     # also if incompatible formats
-    my $e_book = $book_format{$e->{pub_type}};
-    my $c_book = $book_format{$c->{pub_type}};
+    my $e_book = $book_format{$e->{pub_type} || ''};
+    my $c_book = $book_format{$c->{pub_type} || ''};
     return 0 if defined($e_book) and defined ($c_book) and ($e_book xor $c_book);
 
     # normalize encoding of relevant fields
