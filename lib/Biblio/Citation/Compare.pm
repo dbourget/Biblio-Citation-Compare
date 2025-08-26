@@ -274,7 +274,7 @@ sub sameWork {
     # duplicated in sameEntry
     # rule out identity when articles are published in the same journal but with different pages.
     no warnings;
-    if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal" && !$e->date eq 'forthcoming' && !$c->date eq 'forthcoming') {
+    if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal" && $e->date ne 'forthcoming' && $c->date ne 'forthcoming') {
         if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
             if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
                 warn "Different pages for journal entry--not the same work" if $debug;
