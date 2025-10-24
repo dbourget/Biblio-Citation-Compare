@@ -252,6 +252,7 @@ sub sameWork {
             $loose = 1;
             $opts{loose} = 1;
         } else {
+            warn "doi mismatch" if $debug;
             return 0 unless $opts{conflate_versions};
         }
     }
@@ -273,26 +274,27 @@ sub sameWork {
 
     # duplicated in sameEntry
     # rule out identity when articles are published in the same journal but with different pages.
-    no warnings;
-    if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal" && $e->date ne 'forthcoming' && $c->date ne 'forthcoming') {
-        if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
-            if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
-                warn "Different pages for journal entry--not the same work" if $debug;
-                return 0;
-            }
-        }
-    } 
+    # DB: disabled this because too often the pages are just wrong
+    # no warnings;
+    # if ($e->{pub_type} eq "journal" && $c->{pub_type} eq "journal" && $e->date ne 'forthcoming' && $c->date ne 'forthcoming') {
+    #     if ($e->{source} && $c->{source} && ($e->{source} eq $c->{source} || $e->{jId} == $c->{jId})) {
+    #         if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
+    #             warn "Different pages for journal entry--not the same work" if $debug;
+    #             return 0;
+    #         }
+    #     }
+    # } 
     # rule out identity when chapters are published in the same work but with different titles or in different pages.
-    if ($e->{pub_type} eq "chapter" && $c->{pub_type} eq "chapter") {
-        if ( 
-            ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
-            ($e->{book} && $c->{book} && $e->{book} eq $c->{book})
-        ) {
-            if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
-                return 0;
-            }
-        }
-    }
+    # if ($e->{pub_type} eq "chapter" && $c->{pub_type} eq "chapter") {
+    #     if ( 
+    #         ($e->{source} && $c->{source} && $e->{source} eq $c->{source}) || 
+    #         ($e->{book} && $c->{book} && $e->{book} eq $c->{book})
+    #     ) {
+    #         if ($e->{pages} && $c->{pages} && !samePages($e->{pages}, $c->{pages}, tolerance => 2)) {
+    #             return 0;
+    #         }
+    #     }
+    # }
     use warnings;
 
     if ($debug) {
@@ -464,6 +466,14 @@ sub sameAuthorsLoose {
   return $asame_loose || sameAuthorBits($a,$b);
 }
 
+my %author_bits_filter = (
+  'dr' => 1,
+  'mr' => 1,
+  'ms' => 1,
+  'mrs' => 1,
+  'prof' => 1,
+  'professor' => 1,
+);
 sub sameAuthorBits {
     my ($a, $b) = @_;
     my (@alist, @blist);
@@ -479,9 +489,9 @@ sub sameAuthorBits {
         #$v =~ s/(\p{Ll})(\p{Lu})/$1 $2/g;
         push @blist, split(/\s+/, $v); 
     }
+    @alist = grep { !$author_bits_filter{$_} && !$author_bits_filter{$_ . '.'} } sort @alist;
+    @blist = grep { !$author_bits_filter{$_} && !$author_bits_filter{$_ . '.'} } sort @blist;
     #use Data::Dumper;
-    @alist = sort @alist;
-    @blist = sort @blist;
     #print Dumper(\@alist);
     #print Dumper(\@blist);
     return 0 if $#alist != $#blist;
