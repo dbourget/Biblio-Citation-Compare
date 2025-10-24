@@ -473,6 +473,8 @@ my %author_bits_filter = (
   'mrs' => 1,
   'prof' => 1,
   'professor' => 1,
+  'doctor' => 1,
+  'phd' => 1,
 );
 sub sameAuthorBits {
     my ($a, $b) = @_;
