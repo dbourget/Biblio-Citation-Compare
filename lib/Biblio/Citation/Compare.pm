@@ -15,7 +15,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	sameWork sameAuthors toString extractEdition extractVolume sameAuthorBits sameAuthorsLoose sameTitle samePages 
+	sameWork sameAuthors toString extractEdition extractVolume sameAuthorBits sameAuthorsLoose sameTitle samePages mostlySameAuthors
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -464,6 +464,21 @@ sub sameAuthorsLoose {
   my $asame = sameAuthors($a,$b,strict=>1);
   my $asame_loose = $asame || sameAuthors($a,$b,strict=>0);
   return $asame_loose || sameAuthorBits($a,$b);
+}
+
+# of the first 10 authors, if more than half match in the same way as in sameAuthors, return 1
+sub mostlySameAuthors {
+    my ($a, $b, %opts) = @_;
+    my @a = @$a;
+    my @b = @$b;
+    my $count = 0;
+    my $total = min(10, scalar(@a), scalar(@b));
+    for (my $i=0; $i<$total; $i++) {
+        if (samePerson($a[$i], $b[$i], loose=>!$opts{strict})) {
+            $count++;
+        }
+    }
+    return $count > $total / 2;
 }
 
 my %author_bits_filter = (
