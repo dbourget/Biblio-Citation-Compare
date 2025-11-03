@@ -237,7 +237,7 @@ sub sameWork {
     my $debug = $opts{debug} || 0;
 
     $loose = 0 unless defined $loose;
-    $threshold = 0.07 unless $threshold;
+    $threshold = 0.05 unless $threshold;
     $opts{loose} = 1 if $loose;
   
     if ($debug) {
@@ -419,32 +419,35 @@ sub sameWork {
 
         if ($e->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
-            $str1 = _strip_non_word($1);
+            my $str1_bef = lc _strip_non_word($1);
             if ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
               # still try below
             } else {
-                return 1 if fuzzyCompare($str1,$str2,$threshold);
+
+                return 1 if fuzzyCompare($str1_bef,$str2,$threshold,$debug);
             }
 
         } elsif ($c->{title} =~ /(.+?)\s*$TITLE_SPLIT\s*(.+)/) {
 
-            $str2 = _strip_non_word($1);
-            return 1 if fuzzyCompare($str1,$str2,$threshold);
+            my $str2_bef = lc _strip_non_word($1);
+            return 1 if fuzzyCompare($str1,$str2_bef,$threshold,$debug);
 
         }
 
         # try something else: one is a substring of the other before :
-        $str1 = _strip_non_word($e->{title}, 1);
-        $str2 = _strip_non_word($c->{title}, 1);
-        warn "Substring match: $str1 -- $str2" if $debug;
-        if ($str1 =~ /^([^$TITLE_SPLIT]+)$TITLE_SPLIT/) {
-        # if ($str1 =~ /^(.+)$TITLE_SPLIT/) {
-            $str1 = $1 =~ s/^\s+|\s+$//gr;
-            return 1 if $str2 =~ /^\Q$str1\E/
-        } elsif ($str2 =~ /^([^$TITLE_SPLIT]+)$TITLE_SPLIT/) {
-            $str2 = $1 =~ s/^\s+|\s+$//gr;
-            return 1 if $str1 =~ /^\Q$str2\E/
-        }
+        # $str1 = _strip_non_word($e->{title}, 1);
+        # $str2 = _strip_non_word($c->{title}, 1);
+        # warn "Substring match: $str1 -- $str2" if $debug;
+        # my @str_parts = split($TITLE_SPLIT, $str1);
+        # if ($str1 =~ /^([^$TITLE_SPLIT]+)$TITLE_SPLIT/) {
+        # # if ($str1 =~ /^(.+)$TITLE_SPLIT/) {
+        #     warn "title fragment: $1" if $debug;
+        #     $str1 = $1 =~ s/^\s+|\s+$//gr;
+        #     return 1 if $str2 =~ /^\Q$str1\E/
+        # } elsif ($str2 =~ /^([^$TITLE_SPLIT]+)$TITLE_SPLIT/) {
+        #     $str2 = $1 =~ s/^\s+|\s+$//gr;
+        #     return 1 if $str1 =~ /^\Q$str2\E/
+        # }
 
     }
         
@@ -456,7 +459,7 @@ sub fuzzyCompare {
   my $dist = distance($str1,$str2);
   my $denum = (length($str1)+length($str2) +1);
   my $dist_score = $dist / $denum;
-  warn "fuzzyCompare: $dist_score (threshold: $threshold)" if $debug;
+  warn "fuzzyCompare: $str1 vs $str2: $dist_score (threshold: $threshold)" if $debug;
   return $dist_score < $threshold;
 }
 
