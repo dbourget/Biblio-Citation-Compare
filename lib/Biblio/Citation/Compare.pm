@@ -92,9 +92,9 @@ sub sameAuthors {
 
     # Always compare the shorter list to the longer one
     if ($#a2 > $#a1) {
-        my $t = \@a1;
+        my @t = @a1;  # Copy contents, not reference (fixes swap bug)
         @a1 = @a2;
-        @a2 = @$t;
+        @a2 = @t;
     }
     for (my $i = 0; $i <= $#a2; $i++) {
         return 0 unless grep { samePerson($a2[$i],$_, %opts) } @a1;
