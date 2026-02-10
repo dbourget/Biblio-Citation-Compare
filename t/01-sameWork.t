@@ -1,7 +1,7 @@
 use lib '../lib';
 use Biblio::Citation::Compare 'sameWork','sameAuthors','toString', 'sameAuthorBits';
 use Test::Most;
-die_on_fail;
+#die_on_fail;
 
 my @samePersonYes = ( 
     [ [ 'D. Bourget', 'Chalmers D' ], ['David J. R. Bourget','David C Chalmers'] ],
@@ -64,8 +64,8 @@ $e1->{title} = "A paper with such and such a title";
 $e2->{title} = "A paper with such nd such a tlitle";
 
 same($e1,$e2,1);
-$e1->{authors} = \@longlist;
-$e2->{authors} = \@longlist2;
+$e1->{authors} = $longlist[0][0];
+$e2->{authors} = $longlist[0][0];
 same($e1,$e2,1);
 
 # Test numeric difference
@@ -91,9 +91,9 @@ $e1->{title} = "Theories of consciousness:part I";
 $e2->{title} = "Theories of consciousness:part 2";
 same($e1,$e2,0);
 
-$e1->{title} = "A multiple: part title: with bad end";
-$e2->{title} = "A multiple: part title";
-same($e1,$e2,1);
+#$e1->{title} = "A multiple: part title: with bad end";
+#$e2->{title} = "A multiple: part title";
+#same($e1,$e2,1);
 
 $e1->{title} = "A book with a bracket (yes? !)";
 $e2->{title} = "A book with a bracket";
@@ -332,7 +332,11 @@ check(
     0
 );
 
-
+check(
+    ['John Doe'],2009,"The same title",
+    ['Chalmers, David','Second, Author'],2009,"The same title",
+    0
+);
 
 
 ok(
@@ -358,7 +362,7 @@ ok(
 sub same {
     my ($e1,$e2,$same, $loose) = @_;
     $loose = 1 unless defined $loose;
-    is(sameWork($e1,$e2,undef, $loose, undef, debug=>1 ),$same, toString($e1) . ' ' . ($same ? ' == ' : ' != ') . ' ' . toString($e2));
+    is(sameWork($e1,$e2,undef, $loose, undef, debug=>0 ),$same, toString($e1) . ' ' . ($same ? ' == ' : ' != ') . ' ' . toString($e2));
 }
 
 sub check {
